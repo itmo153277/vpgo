@@ -1,0 +1,4 @@
+ACLOCAL_AMFLAGS = -I m4
+bin_PROGRAMS = vpgo
+vpgo_SOURCES = main.cpp
+EXTRA_DIST = README.md
