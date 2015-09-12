@@ -37,11 +37,24 @@ AX_CXX_COMPILE_STDCXX_11([], [mandatory])
 
 # Checks for libraries.
 
+PKG_CHECK_MODULES([jsoncpp], [jsoncpp >= 0.6.0], [],
+	[AC_MSG_ERROR([couldn't find jsoncpp])]);
+LIBS="$jsoncpp_LIBS $LIBS"
+CPPFLAGS="$jsoncpp_CFLAGS $CPPFLAGS"
+CFLAGS="$jsoncpp_CFLAGS $CFLAGS"
+CXXFLAGS="$jsoncpp_CFLAGS $CXXFLAGS"
+
+AC_SUBST([CHECK_CFLAGS])
+AC_SUBST([CHECK_LIBS])
+
 # Checks for header files.
 
 # Checks for typedefs, structures, and compiler characteristics.
 
 # Checks for library functions.
 
-AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([Makefile
+                 src/Makefile
+                 tests/Makefile])
+
 AC_OUTPUT
