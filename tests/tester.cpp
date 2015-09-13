@@ -1,3 +1,10 @@
+/**
+ * @file   tester.cpp
+ * @brief  Программа запуска тестов
+ *
+ * Программа парсит тесты в виде json-файлов, собирает набор и выполняет
+ */
+
 /*
  A simple bot playing Go
  Copyright (C) 2015 Ivanov Viktor
@@ -15,3 +22,19 @@
  You should have received a copy of the GNU General Public License
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+#include <boost/test/included/unit_test.hpp>
+
+using namespace boost::unit_test;
+
+/**
+ * Функция парсинга тестового файла и регистрации тестов
+ * @param argc Количество аргументов тестера
+ * @param argv Аргументы тестера
+ * @return Всегда NULL, так как все тесты регистрируются самостоятельно
+ */
+test_suite*
+init_unit_test_suite( int argc, char* argv[] )
+{
+    return 0;
+}
