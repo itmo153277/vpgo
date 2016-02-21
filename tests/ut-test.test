@@ -1,0 +1,7 @@
+{
+	"suites": [
+		{
+			"name": "ut-test"
+		}
+	]
+}

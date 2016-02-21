@@ -1,6 +1,6 @@
 /**
- * @file   tester.cpp
- * @brief  Программа запуска тестов
+ * @file tester.cpp
+ * @brief Программа запуска тестов
  *
  * Программа парсит тесты в виде json-файлов, собирает набор и выполняет
  */
@@ -23,6 +23,7 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <boost/test/included/unit_test.hpp>
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -34,6 +35,7 @@
 
 using namespace ::boost::unit_test;
 using namespace ::std;
+using namespace ::vpgo;
 using namespace ::vpgo::tests;
 
 /**
@@ -64,9 +66,9 @@ init_unit_test_suite(int argc, char* argv[]) {
 		return NULL;
 	}
 
-	static const int ParsersCount = 0;
-	static const char *ParserAliases[ParsersCount] = { };
-	ParserHandler ParserHandlers[ParsersCount] = { };
+	static const int ParsersCount = 1;
+	static const char *ParserAliases[ParsersCount] = { "ut-test" };
+	ParserHandler ParserHandlers[ParsersCount] = { &UT_Test };
 
 	for (auto TestSuite : Root["suites"]) {
 		string SuiteName = TestSuite["name"].asString();

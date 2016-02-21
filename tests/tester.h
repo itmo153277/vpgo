@@ -28,7 +28,7 @@
 #include "config.h"
 #endif
 
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <json/json.h>
 
 namespace vpgo {
@@ -41,8 +41,16 @@ namespace tests {
  * @param Object Входные параметры теста
  * @return Набор тестов
  */
-typedef ::boost::unit_test::test_suite *(*ParserHandler)(
+typedef boost::unit_test::test_suite *(*ParserHandler)(
 		const Json::Value &Object);
+
+/**
+ * Тестер корректной работы unit-test фреймворка
+ *
+ * @param Object Входные параметры теста
+ * @return Набор тестов
+ */
+boost::unit_test::test_suite *UT_Test(const Json::Value &Object);
 
 }
 
