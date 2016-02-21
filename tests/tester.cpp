@@ -45,8 +45,7 @@ using namespace ::vpgo::tests;
  * @param argv Аргументы тестера
  * @return Всегда NULL, так как все тесты регистрируются самостоятельно
  */
-test_suite*
-init_unit_test_suite(int argc, char* argv[]) {
+test_suite *init_unit_test_suite(int argc, char* argv[]) {
 	if (argc < 2) {
 		return NULL;
 	}

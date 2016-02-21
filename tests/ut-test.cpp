@@ -29,6 +29,12 @@ using namespace ::boost::unit_test;
 using namespace ::vpgo;
 using namespace ::vpgo::tests;
 
+/**
+ * Тестер корректной работы unit-test фреймворка
+ *
+ * @param Object Входные параметры теста
+ * @return Набор тестов
+ */
 test_suite *::vpgo::tests::UT_Test(const Json::Value &Object) {
 	test_suite *ts = BOOST_TEST_SUITE("ut-test");
 	ts->add(BOOST_TEST_CASE([&]{ BOOST_CHECK(true); }));
