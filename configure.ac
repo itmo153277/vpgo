@@ -10,14 +10,16 @@ DX_RTF_FEATURE(OFF)
 DX_XML_FEATURE(OFF)
 DX_PDF_FEATURE(OFF)
 DX_PS_FEATURE(OFF)
-DX_INIT_DOXYGEN([vpgo])
+DX_INIT_DOXYGEN([vpgo], [], [doc])
 AM_INIT_AUTOMAKE([-Wall -Werror subdir-objects])
 AC_CONFIG_HEADERS([config.h])
 
-AC_COPYRIGHT([Copyright (c) 2015 Ivanov Viktor])
-AC_REVISION([rev4])
+AC_COPYRIGHT([Copyright (c) 2016 Ivanov Viktor])
+AC_REVISION([rev5])
 
 AC_CANONICAL_HOST
+
+AM_CONDITIONAL([MAKE_MAN], [test "x$DX_FLAG_man" = "x1"])
 
 host_os_windows=no
 case ${host_os} in

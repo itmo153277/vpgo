@@ -106,7 +106,7 @@ mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
-am__installdirs = "$(DESTDIR)$(bindir)"
+am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(man3dir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_vpgo_OBJECTS = main.$(OBJEXT)
 vpgo_OBJECTS = $(am_vpgo_OBJECTS)
@@ -155,6 +155,36 @@ am__can_run_installinfo = \
     n|no|NO) false;; \
     *) (install-info --version) >/dev/null 2>&1;; \
   esac
+am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
+am__vpath_adj = case $$p in \
+    $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
+    *) f=$$p;; \
+  esac;
+am__strip_dir = f=`echo $$p | sed -e 's|^.*/||'`;
+am__install_max = 40
+am__nobase_strip_setup = \
+  srcdirstrip=`echo "$(srcdir)" | sed 's/[].[^$$\\*|]/\\\\&/g'`
+am__nobase_strip = \
+  for p in $$list; do echo "$$p"; done | sed -e "s|$$srcdirstrip/||"
+am__nobase_list = $(am__nobase_strip_setup); \
+  for p in $$list; do echo "$$p $$p"; done | \
+  sed "s| $$srcdirstrip/| |;"' / .*\//!s/ .*/ ./; s,\( .*\)/[^/]*$$,\1,' | \
+  $(AWK) 'BEGIN { files["."] = "" } { files[$$2] = files[$$2] " " $$1; \
+    if (++n[$$2] == $(am__install_max)) \
+      { print $$2, files[$$2]; n[$$2] = 0; files[$$2] = "" } } \
+    END { for (dir in files) print dir, files[dir] }'
+am__base_list = \
+  sed '$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;s/\n/ /g' | \
+  sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
+am__uninstall_files_from_dir = { \
+  test -z "$$files" \
+    || { test ! -d "$$dir" && test ! -f "$$dir" && test ! -r "$$dir"; } \
+    || { echo " ( cd '$$dir' && rm -f" $$files ")"; \
+         $(am__cd) "$$dir" && rm -f $$files; }; \
+  }
+man3dir = $(mandir)/man3
+NROFF = nroff
+MANS = $(dist_man3_MANS)
 RECURSIVE_CLEAN_TARGETS = mostlyclean-recursive clean-recursive	\
   distclean-recursive maintainer-clean-recursive
 am__recursive_targets = \
@@ -185,7 +215,7 @@ ETAGS = etags
 CTAGS = ctags
 CSCOPE = cscope
 DIST_SUBDIRS = $(SUBDIRS)
-am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/aminclude.am \
+am__DIST_COMMON = $(dist_man3_MANS) $(srcdir)/Makefile.in \
 	$(srcdir)/config.h.in $(top_srcdir)/auxdir/ar-lib \
 	$(top_srcdir)/auxdir/compile $(top_srcdir)/auxdir/config.guess \
 	$(top_srcdir)/auxdir/config.sub $(top_srcdir)/auxdir/depcomp \
@@ -374,31 +404,8 @@ SUBDIRS = src tests
 vpgo_SOURCES = main.cpp
 vpgo_LDADD = src/libvpgo.a
 EXTRA_DIST = README.md $(DX_CONFIG)
-@DX_COND_doc_TRUE@@DX_COND_html_TRUE@DX_CLEAN_HTML = @DX_DOCDIR@/html
-@DX_COND_chm_TRUE@@DX_COND_doc_TRUE@DX_CLEAN_CHM = @DX_DOCDIR@/chm
-@DX_COND_chi_TRUE@@DX_COND_chm_TRUE@@DX_COND_doc_TRUE@DX_CLEAN_CHI = @DX_DOCDIR@/@PACKAGE@.chi
-@DX_COND_doc_TRUE@@DX_COND_man_TRUE@DX_CLEAN_MAN = @DX_DOCDIR@/man
-@DX_COND_doc_TRUE@@DX_COND_rtf_TRUE@DX_CLEAN_RTF = @DX_DOCDIR@/rtf
-@DX_COND_doc_TRUE@@DX_COND_xml_TRUE@DX_CLEAN_XML = @DX_DOCDIR@/xml
-@DX_COND_doc_TRUE@@DX_COND_ps_TRUE@DX_CLEAN_PS = @DX_DOCDIR@/@PACKAGE@.ps
-@DX_COND_doc_TRUE@@DX_COND_ps_TRUE@DX_PS_GOAL = doxygen-ps
-@DX_COND_doc_TRUE@@DX_COND_pdf_TRUE@DX_CLEAN_PDF = @DX_DOCDIR@/@PACKAGE@.pdf
-@DX_COND_doc_TRUE@@DX_COND_pdf_TRUE@DX_PDF_GOAL = doxygen-pdf
-@DX_COND_doc_TRUE@@DX_COND_latex_TRUE@DX_CLEAN_LATEX = @DX_DOCDIR@/latex
-@DX_COND_doc_TRUE@DX_CLEANFILES = \
-@DX_COND_doc_TRUE@	@DX_DOCDIR@/@PACKAGE@.tag \
-@DX_COND_doc_TRUE@	-r \
-@DX_COND_doc_TRUE@	$(DX_CLEAN_HTML) \
-@DX_COND_doc_TRUE@	$(DX_CLEAN_CHM) \
-@DX_COND_doc_TRUE@	$(DX_CLEAN_CHI) \
-@DX_COND_doc_TRUE@	$(DX_CLEAN_MAN) \
-@DX_COND_doc_TRUE@	$(DX_CLEAN_RTF) \
-@DX_COND_doc_TRUE@	$(DX_CLEAN_XML) \
-@DX_COND_doc_TRUE@	$(DX_CLEAN_PS) \
-@DX_COND_doc_TRUE@	$(DX_CLEAN_PDF) \
-@DX_COND_doc_TRUE@	$(DX_CLEAN_LATEX)
-
 MOSTLYCLEANFILES = $(DX_CLEANFILES)
+@MAKE_MAN_TRUE@dist_man3_MANS = $(top_builddir)/doc/man/man3/*.3
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
@@ -406,7 +413,7 @@ all: config.h
 .SUFFIXES: .cpp .o .obj
 am--refresh: Makefile
 	@:
-$(srcdir)/Makefile.in:  $(srcdir)/Makefile.am $(srcdir)/aminclude.am $(am__configure_deps)
+$(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
 	    *$$dep*) \
@@ -428,7 +435,6 @@ Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	    echo ' cd $(top_builddir) && $(SHELL) ./config.status $@ $(am__depfiles_maybe)'; \
 	    cd $(top_builddir) && $(SHELL) ./config.status $@ $(am__depfiles_maybe);; \
 	esac;
-$(srcdir)/aminclude.am $(am__empty):
 
 $(top_builddir)/config.status: $(top_srcdir)/configure $(CONFIG_STATUS_DEPENDENCIES)
 	$(SHELL) ./config.status --recheck
@@ -523,6 +529,47 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
+install-man3: $(dist_man3_MANS)
+	@$(NORMAL_INSTALL)
+	@list1='$(dist_man3_MANS)'; \
+	list2=''; \
+	test -n "$(man3dir)" \
+	  && test -n "`echo $$list1$$list2`" \
+	  || exit 0; \
+	echo " $(MKDIR_P) '$(DESTDIR)$(man3dir)'"; \
+	$(MKDIR_P) "$(DESTDIR)$(man3dir)" || exit 1; \
+	{ for i in $$list1; do echo "$$i"; done;  \
+	if test -n "$$list2"; then \
+	  for i in $$list2; do echo "$$i"; done \
+	    | sed -n '/\.3[a-z]*$$/p'; \
+	fi; \
+	} | while read p; do \
+	  if test -f $$p; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; echo "$$p"; \
+	done | \
+	sed -e 'n;s,.*/,,;p;h;s,.*\.,,;s,^[^3][0-9a-z]*$$,3,;x' \
+	      -e 's,\.[0-9a-z]*$$,,;$(transform);G;s,\n,.,' | \
+	sed 'N;N;s,\n, ,g' | { \
+	list=; while read file base inst; do \
+	  if test "$$base" = "$$inst"; then list="$$list $$file"; else \
+	    echo " $(INSTALL_DATA) '$$file' '$(DESTDIR)$(man3dir)/$$inst'"; \
+	    $(INSTALL_DATA) "$$file" "$(DESTDIR)$(man3dir)/$$inst" || exit $$?; \
+	  fi; \
+	done; \
+	for i in $$list; do echo "$$i"; done | $(am__base_list) | \
+	while read files; do \
+	  test -z "$$files" || { \
+	    echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(man3dir)'"; \
+	    $(INSTALL_DATA) $$files "$(DESTDIR)$(man3dir)" || exit $$?; }; \
+	done; }
+
+uninstall-man3:
+	@$(NORMAL_UNINSTALL)
+	@list='$(dist_man3_MANS)'; test -n "$(man3dir)" || exit 0; \
+	files=`{ for i in $$list; do echo "$$i"; done; \
+	} | sed -e 's,.*/,,;h;s,.*\.,,;s,^[^3][0-9a-z]*$$,3,;x' \
+	      -e 's,\.[0-9a-z]*$$,,;$(transform);G;s,\n,.,'`; \
+	dir='$(DESTDIR)$(man3dir)'; $(am__uninstall_files_from_dir)
 
 # This directory's subdirectories are mostly independent; you can cd
 # into them and run 'make' without going through this Makefile.
@@ -820,10 +867,10 @@ distcleancheck: distclean
 	       exit 1; } >&2
 check-am: all-am
 check: check-recursive
-all-am: Makefile $(PROGRAMS) config.h
+all-am: Makefile $(PROGRAMS) $(MANS) config.h
 installdirs: installdirs-recursive
 installdirs-am:
-	for dir in "$(DESTDIR)$(bindir)"; do \
+	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(man3dir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-recursive
@@ -872,7 +919,7 @@ dvi: dvi-recursive
 
 dvi-am:
 
-@DX_COND_html_FALSE@html: html-recursive
+html: html-recursive
 
 html-am:
 
@@ -880,7 +927,7 @@ info: info-recursive
 
 info-am:
 
-install-data-am:
+install-data-am: install-man
 
 install-dvi: install-dvi-recursive
 
@@ -896,7 +943,7 @@ install-info: install-info-recursive
 
 install-info-am:
 
-install-man:
+install-man: install-man3
 
 install-pdf: install-pdf-recursive
 
@@ -927,7 +974,9 @@ ps: ps-recursive
 
 ps-am:
 
-uninstall-am: uninstall-binPROGRAMS
+uninstall-am: uninstall-binPROGRAMS uninstall-man
+
+uninstall-man: uninstall-man3
 
 .MAKE: $(am__recursive_targets) all install-am install-strip
 
@@ -942,63 +991,18 @@ uninstall-am: uninstall-binPROGRAMS
 	install-binPROGRAMS install-data install-data-am install-dvi \
 	install-dvi-am install-exec install-exec-am install-html \
 	install-html-am install-info install-info-am install-man \
-	install-pdf install-pdf-am install-ps install-ps-am \
-	install-strip installcheck installcheck-am installdirs \
-	installdirs-am maintainer-clean maintainer-clean-generic \
-	mostlyclean mostlyclean-compile mostlyclean-generic pdf pdf-am \
-	ps ps-am tags tags-am uninstall uninstall-am \
-	uninstall-binPROGRAMS
+	install-man3 install-pdf install-pdf-am install-ps \
+	install-ps-am install-strip installcheck installcheck-am \
+	installdirs installdirs-am maintainer-clean \
+	maintainer-clean-generic mostlyclean mostlyclean-compile \
+	mostlyclean-generic pdf pdf-am ps ps-am tags tags-am uninstall \
+	uninstall-am uninstall-binPROGRAMS uninstall-man \
+	uninstall-man3
 
 .PRECIOUS: Makefile
 
-
-@DX_COND_doc_TRUE@@DX_COND_ps_TRUE@doxygen-ps: @DX_DOCDIR@/@PACKAGE@.ps
-
-@DX_COND_doc_TRUE@@DX_COND_ps_TRUE@@DX_DOCDIR@/@PACKAGE@.ps: @DX_DOCDIR@/@PACKAGE@.tag
-@DX_COND_doc_TRUE@@DX_COND_ps_TRUE@	cd @DX_DOCDIR@/latex; \
-@DX_COND_doc_TRUE@@DX_COND_ps_TRUE@	rm -f *.aux *.toc *.idx *.ind *.ilg *.log *.out; \
-@DX_COND_doc_TRUE@@DX_COND_ps_TRUE@	$(DX_LATEX) refman.tex; \
-@DX_COND_doc_TRUE@@DX_COND_ps_TRUE@	$(MAKEINDEX_PATH) refman.idx; \
-@DX_COND_doc_TRUE@@DX_COND_ps_TRUE@	$(DX_LATEX) refman.tex; \
-@DX_COND_doc_TRUE@@DX_COND_ps_TRUE@	countdown=5; \
-@DX_COND_doc_TRUE@@DX_COND_ps_TRUE@	while $(DX_EGREP) 'Rerun (LaTeX|to get cross-references right)' \
-@DX_COND_doc_TRUE@@DX_COND_ps_TRUE@					  refman.log > /dev/null 2>&1 \
-@DX_COND_doc_TRUE@@DX_COND_ps_TRUE@	   && test $$countdown -gt 0; do \
-@DX_COND_doc_TRUE@@DX_COND_ps_TRUE@		$(DX_LATEX) refman.tex; \
-@DX_COND_doc_TRUE@@DX_COND_ps_TRUE@		countdown=`expr $$countdown - 1`; \
-@DX_COND_doc_TRUE@@DX_COND_ps_TRUE@	done; \
-@DX_COND_doc_TRUE@@DX_COND_ps_TRUE@	$(DX_DVIPS) -o ../@PACKAGE@.ps refman.dvi
-
-@DX_COND_doc_TRUE@@DX_COND_pdf_TRUE@doxygen-pdf: @DX_DOCDIR@/@PACKAGE@.pdf
-
-@DX_COND_doc_TRUE@@DX_COND_pdf_TRUE@@DX_DOCDIR@/@PACKAGE@.pdf: @DX_DOCDIR@/@PACKAGE@.tag
-@DX_COND_doc_TRUE@@DX_COND_pdf_TRUE@	cd @DX_DOCDIR@/latex; \
-@DX_COND_doc_TRUE@@DX_COND_pdf_TRUE@	rm -f *.aux *.toc *.idx *.ind *.ilg *.log *.out; \
-@DX_COND_doc_TRUE@@DX_COND_pdf_TRUE@	$(DX_PDFLATEX) refman.tex; \
-@DX_COND_doc_TRUE@@DX_COND_pdf_TRUE@	$(DX_MAKEINDEX) refman.idx; \
-@DX_COND_doc_TRUE@@DX_COND_pdf_TRUE@	$(DX_PDFLATEX) refman.tex; \
-@DX_COND_doc_TRUE@@DX_COND_pdf_TRUE@	countdown=5; \
-@DX_COND_doc_TRUE@@DX_COND_pdf_TRUE@	while $(DX_EGREP) 'Rerun (LaTeX|to get cross-references right)' \
-@DX_COND_doc_TRUE@@DX_COND_pdf_TRUE@					  refman.log > /dev/null 2>&1 \
-@DX_COND_doc_TRUE@@DX_COND_pdf_TRUE@	   && test $$countdown -gt 0; do \
-@DX_COND_doc_TRUE@@DX_COND_pdf_TRUE@		$(DX_PDFLATEX) refman.tex; \
-@DX_COND_doc_TRUE@@DX_COND_pdf_TRUE@		countdown=`expr $$countdown - 1`; \
-@DX_COND_doc_TRUE@@DX_COND_pdf_TRUE@	done; \
-@DX_COND_doc_TRUE@@DX_COND_pdf_TRUE@	mv refman.pdf ../@PACKAGE@.pdf
-
-@DX_COND_doc_TRUE@.PHONY: doxygen-run doxygen-doc $(DX_PS_GOAL) $(DX_PDF_GOAL)
-
-@DX_COND_doc_TRUE@.INTERMEDIATE: doxygen-run $(DX_PS_GOAL) $(DX_PDF_GOAL)
-
-@DX_COND_doc_TRUE@doxygen-run: @DX_DOCDIR@/@PACKAGE@.tag
-
-@DX_COND_doc_TRUE@doxygen-doc: doxygen-run $(DX_PS_GOAL) $(DX_PDF_GOAL)
-
-@DX_COND_doc_TRUE@@DX_DOCDIR@/@PACKAGE@.tag: $(DX_CONFIG) $(pkginclude_HEADERS)
-@DX_COND_doc_TRUE@	$(DX_ENV) $(DX_DOXYGEN) $(srcdir)/$(DX_CONFIG)
-@DX_COND_doc_TRUE@	echo Timestamp >$@
-
-@DX_COND_html_TRUE@html: doxygen-doc
+@DX_RULES@
+@MAKE_MAN_TRUE@$(dist_man3_MANS): doxygen-doc
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
