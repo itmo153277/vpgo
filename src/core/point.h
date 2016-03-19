@@ -168,6 +168,10 @@ private:
 	 * Текущий индекс
 	 */
 	std::size_t m_Current;
+	/**
+	 * Флаг конца
+	 */
+	bool m_EndFlag;
 protected:
 	/**
 	 * Получает экзмепляр объекта
@@ -213,9 +217,10 @@ public:
 	 *
 	 * @param Control Управляющий объект
 	 * @param Index Начальный индекс
+	 * @param EndFlag Флаг окончания
 	 */
-	explicit PointIteratorBase(PointIteratorControl *Control,
-			std::size_t Index);
+	explicit PointIteratorBase(PointIteratorControl *Control, std::size_t Index,
+			bool EndFlag);
 	/**
 	 * Оператор равенства
 	 *
@@ -267,9 +272,10 @@ private:
 	 *
 	 * @param Control Управляющий объект
 	 * @param Index Индекс
+	 * @param EndFlag Флаг окончания
 	 */
 	explicit PointIteratorConst(PointIteratorControl *Control,
-			std::size_t Index);
+			std::size_t Index, bool EndFlag);
 public:
 	/**
 	 * Оператор присвоения
@@ -281,7 +287,6 @@ public:
 	/**
 	 * Оператор инкремента справа
 	 *
-	 * @param Ненужный параметр
 	 * @return Старый экзмпляр
 	 */
 	inline PointIteratorConst operator++(int) {
@@ -292,7 +297,6 @@ public:
 	/**
 	 * Оператор декремента справа
 	 *
-	 * @param Ненужный параметр
 	 * @return Старый экземпляр
 	 */
 	inline PointIteratorConst operator--(int) {
@@ -358,8 +362,10 @@ private:
 	 *
 	 * @param Control Управляющий объект
 	 * @param Index Индекс
+	 * @param EndFlag Флаг окончания
 	 */
-	explicit PointIterator(PointIteratorControl *Control, std::size_t Index);
+	explicit PointIterator(PointIteratorControl *Control, std::size_t Index,
+			bool EndFlag);
 public:
 	/**
 	 * Оператор присвоения
@@ -371,7 +377,6 @@ public:
 	/**
 	 * Оператор инкремента справа
 	 *
-	 * @param Ненужный параметр
 	 * @return Старый экзмпляр
 	 */
 	inline PointIterator operator++(int) {
@@ -382,7 +387,6 @@ public:
 	/**
 	 * Оператор декремента справа
 	 *
-	 * @param Ненужный параметр
 	 * @return Старый экземпляр
 	 */
 	inline PointIterator operator--(int) {
