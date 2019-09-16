@@ -1,7 +1,16 @@
 AC_PREREQ([2.69])
+
 AC_INIT([vpgo], [0.1], [viktprog@gmail.com])
+AC_COPYRIGHT([Copyright (c) 2019 Ivanov Viktor])
+
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR([auxdir])
+AM_INIT_AUTOMAKE([-Wall -Werror foreign])
+AM_MAINTAINER_MODE
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES(yes)], [AC_SUBST([AM_DEFAULT_VERBOSITY], [1])])
+
+AC_CANONICAL_HOST
+
 DX_HTML_FEATURE(ON)
 DX_CHM_FEATURE(OFF)
 DX_CHI_FEATURE(OFF)
@@ -11,71 +20,15 @@ DX_XML_FEATURE(OFF)
 DX_PDF_FEATURE(OFF)
 DX_PS_FEATURE(OFF)
 DX_INIT_DOXYGEN([vpgo], [], [doc])
-AM_INIT_AUTOMAKE([-Wall -Werror subdir-objects])
-AC_CONFIG_HEADERS([config.h])
-
-AC_COPYRIGHT([Copyright (c) 2016 Ivanov Viktor])
-AC_REVISION([rev5])
-
-AC_CANONICAL_HOST
-
 AM_CONDITIONAL([MAKE_MAN], [test "x$DX_FLAG_man" = "x1"])
 
-host_os_windows=no
-case ${host_os} in
-	*cygwin* | *mingw* )
-		host_os_windows=yes
-		;;
-esac
-AM_CONDITIONAL([WINDOWS], [test "x$host_os_windows" = "xyes"])
-
-dnl Should add -mwin32 to enable _WIN32 macro
-
-case ${host_os} in
-	*cygwin* )
-	CFLAGS="-mwin32 $CFLAGS"
-	CXXFLAGS="-mwin32 $CXXFLAGS"
-esac
-
-# Checks for programs.
-AC_PROG_RANLIB
-AC_PROG_CC
-AC_PROG_CXX
-AM_PROG_AR
+AC_CONFIG_HEADERS([config.h])
 
 AC_LANG([C++])
+AX_CXX_COMPILE_STDCXX_17([], [mandatory])
 
-AX_CXX_COMPILE_STDCXX_11([], [mandatory])
+VPGO_INIT_DEPS
+VPGO_INIT_TESTS
 
-# Checks for libraries.
-
-
-AC_SUBST([CHECK_CFLAGS])
-AC_SUBST([CHECK_LIBS])
-
-AX_BOOST_BASE([1.54])
-AX_BOOST_UNIT_TEST_FRAMEWORK
-
-CFLAGS="$CFLAGS $BOOST_CFLAGS"
-CXXFLAGS="$CXXFLAGS $BOOST_CFLAGS"
-LDFLAGS="$LDFLAGS $BOOST_LDFLAGS"
-CHECK_LIBS=$BOOST_UNIT_TEST_FRAMEWORK_LIB
-
-PKG_CHECK_MODULES([jsoncpp], [jsoncpp >= 0.6.0], [],
-	[AC_MSG_ERROR([couldn't find jsoncpp])]);
-LIBS="$jsoncpp_LIBS $LIBS"
-CPPFLAGS="$jsoncpp_CFLAGS $CPPFLAGS"
-CFLAGS="$jsoncpp_CFLAGS $CFLAGS"
-CXXFLAGS="$jsoncpp_CFLAGS $CXXFLAGS"
-
-# Checks for header files.
-
-# Checks for typedefs, structures, and compiler characteristics.
-
-# Checks for library functions.
-
-AC_CONFIG_FILES([Makefile
-                 src/Makefile
-                 tests/Makefile])
-
+AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

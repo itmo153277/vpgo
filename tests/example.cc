@@ -1,7 +1,6 @@
 /**
  * @file
- *
- * Entry point
+ * Example unit test
  */
 /*
     Simple Go engine
@@ -21,15 +20,12 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "src/vpgo.hpp"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-/**
- * Entry point
- *
- * @param argc Number of command line arguments
- * @param argv Array of command line arguments
- * @return Exit code
- */
-int main(int argc, char **argv) {
-	return 0;
+#include <boost/test/unit_test.hpp>
+
+BOOST_AUTO_TEST_CASE(test01) {
+	BOOST_CHECK(true);
 }

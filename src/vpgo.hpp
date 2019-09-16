@@ -1,7 +1,7 @@
+
 /**
  * @file
- *
- * Entry point
+ * Global header config
  */
 /*
     Simple Go engine
@@ -21,15 +21,11 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "src/vpgo.hpp"
+#ifndef SRC_VPGO_HPP_
+#define SRC_VPGO_HPP_
 
-/**
- * Entry point
- *
- * @param argc Number of command line arguments
- * @param argv Array of command line arguments
- * @return Exit code
- */
-int main(int argc, char **argv) {
-	return 0;
-}
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#endif  // SRC_VPGO_HPP_

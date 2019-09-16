@@ -1,0 +1,15 @@
+/.cproject
+/.project
+/.settings
+/.autotools
+/autom4te.cache
+/auxdir
+Makefile.in
+/INSTALL
+/aclocal.m4
+/configure
+/config.h.in
+*~
+/Debug
+/Release
+/.vscode
