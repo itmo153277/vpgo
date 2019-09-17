@@ -8,6 +8,7 @@ noinst_HEADERS = \
 	src/board.hpp \
 	src/colour.hpp
 VPGO_UNITTESTS = \
+	tests/board.cc \
 	tests/colour.cc
 VPGO_M4 = \
 	m4/deps.m4 \

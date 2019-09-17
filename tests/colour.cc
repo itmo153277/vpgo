@@ -47,4 +47,7 @@ BOOST_AUTO_TEST_CASE(colour_inverse) {
 	    PlayerColour(PlayerColour::NEUTRAL).inverse() == PlayerColour::NEUTRAL);
 }
 
+static_assert(
+    PlayerColour(PlayerColour::BLACK).inverse() == PlayerColour::WHITE);
+
 BOOST_AUTO_TEST_SUITE_END()

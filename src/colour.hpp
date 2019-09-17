@@ -78,7 +78,7 @@ public:
 	 *
 	 * @return Value Enum value
 	 */
-	operator Value() const {
+	constexpr operator Value() const {
 		return m_val;
 	}
 
@@ -87,7 +87,7 @@ public:
 	 *
 	 * @return Inverted colour
 	 */
-	constexpr PlayerColour inverse() {
+	constexpr PlayerColour inverse() const {
 		switch (m_val) {
 		case BLACK:
 			return WHITE;
