@@ -1,5 +1,5 @@
 /**
- * @file
+ * @file main.cpp
  *
  * Entry point
  */

@@ -4,10 +4,11 @@ AUTOMAKE_OPTIONS = subdir-objects
 VPGO_MAIN = \
 	src/board.cc
 noinst_HEADERS = \
-	src/vpgo.hpp
-	src/board.hpp
+	src/vpgo.hpp \
+	src/board.hpp \
+	src/colour.hpp
 VPGO_UNITTESTS = \
-	tests/example.cc
+	tests/colour.cc
 VPGO_M4 = \
 	m4/deps.m4 \
 	m4/tests.m4
