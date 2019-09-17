@@ -40,16 +40,15 @@ constexpr auto makeArray(T &&value) {
 	    std::make_integer_sequence<std::size_t, N>(), std::forward<T>(value));
 }
 
-
 BOOST_AUTO_TEST_CASE(board_default_ctor) {
 	const Board board(9);
 	BOOST_REQUIRE(board.getSize() == 9);
 	const std::array<PlayerColour, 81> bv1 =
 	    makeArray<81, PlayerColour>(PlayerColour::NONE);
 	std::array<PlayerColour, 81> bv2;
-    for (std::size_t i = 0; i < 81; ++i) {
-        bv2[i] = board.getValue(i);
-    }
+	for (std::size_t i = 0; i < 81; ++i) {
+		bv2[i] = board.getValue(i);
+	}
 	BOOST_TEST(bv1 == bv2, boost::test_tools::per_element());
 }
 
