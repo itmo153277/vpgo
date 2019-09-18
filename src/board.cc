@@ -67,6 +67,8 @@ void Board::reduceLiberties(std::size_t targetOffset, std::size_t currentOffset,
  * Remove group of stones
  *
  * @param offset Offset
+ * @param x X coord
+ * @param y Y coord
  */
 void Board::removeGroup(std::size_t offset, std::size_t x, std::size_t y) {
 	assert(x < m_Size && y < m_Size);
