@@ -27,23 +27,23 @@ BOOST_AUTO_TEST_SUITE(colour_tests)
 
 BOOST_AUTO_TEST_CASE(colour_copy_ctor) {
 	PlayerColour c = PlayerColour::BLACK;
-	BOOST_CHECK(c == PlayerColour::BLACK);
+	BOOST_TEST(c == PlayerColour::BLACK);
 }
 
 BOOST_AUTO_TEST_CASE(colour_assign_ctor) {
 	PlayerColour c;
 	c = PlayerColour::BLACK;
-	BOOST_CHECK(c == PlayerColour::BLACK);
+	BOOST_TEST(c == PlayerColour::BLACK);
 }
 
 BOOST_AUTO_TEST_CASE(colour_inverse) {
-	BOOST_CHECK(
+	BOOST_TEST(
 	    PlayerColour(PlayerColour::BLACK).inverse() == PlayerColour::WHITE);
-	BOOST_CHECK(
+	BOOST_TEST(
 	    PlayerColour(PlayerColour::WHITE).inverse() == PlayerColour::BLACK);
-	BOOST_CHECK(
+	BOOST_TEST(
 	    PlayerColour(PlayerColour::NONE).inverse() == PlayerColour::NONE);
-	BOOST_CHECK(
+	BOOST_TEST(
 	    PlayerColour(PlayerColour::NEUTRAL).inverse() == PlayerColour::NEUTRAL);
 }
 

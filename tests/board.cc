@@ -42,7 +42,7 @@ constexpr auto makeArray(T &&value) {
 
 BOOST_AUTO_TEST_CASE(board_default_ctor) {
 	const Board board(9);
-	BOOST_REQUIRE(board.getSize() == 9);
+	BOOST_TEST_REQUIRE(board.getSize() == 9);
 	const std::array<PlayerColour, 81> bv1 =
 	    makeArray<81, PlayerColour>(PlayerColour::NONE);
 	std::array<PlayerColour, 81> bv2;
@@ -50,6 +50,32 @@ BOOST_AUTO_TEST_CASE(board_default_ctor) {
 		bv2[i] = board.getValue(i);
 	}
 	BOOST_TEST(bv1 == bv2, boost::test_tools::per_element());
+}
+
+BOOST_AUTO_TEST_CASE(board_liberties) {
+	Board board(9);
+
+	board.playMove(0, 0, PlayerColour::BLACK);
+	board.playMove(0, 1, PlayerColour::BLACK);
+	board.playMove(1, 1, PlayerColour::WHITE);
+	BOOST_TEST(board.getLiberties(0, 0) == 2);
+	BOOST_TEST(board.getLiberties(0, 1) == 2);
+	BOOST_TEST(board.getLiberties(1, 1) == 3);
+}
+
+BOOST_AUTO_TEST_CASE(board_capture) {
+	Board board(9);
+
+	board.playMove(0, 0, PlayerColour::BLACK);
+	board.playMove(0, 1, PlayerColour::BLACK);
+	board.playMove(1, 0, PlayerColour::WHITE);
+	board.playMove(1, 1, PlayerColour::WHITE);
+	board.playMove(0, 2, PlayerColour::WHITE);
+	BOOST_TEST(board.getValue(0, 0) == PlayerColour::NONE);
+	BOOST_TEST(board.getValue(0, 1) == PlayerColour::NONE);
+	BOOST_TEST(board.getLiberties(0, 2) == 3);
+	BOOST_TEST(board.getLiberties(1, 0) == 5);
+	BOOST_TEST(board.getLiberties(1, 1) == 5);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
