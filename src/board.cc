@@ -51,8 +51,7 @@ void Board::reduceLiberties(std::size_t targetOffset, std::size_t currentOffset,
 		m_Groups[currentOffset].libs++;
 	} else {
 		std::size_t targetGroup = getGroupLocation(targetOffset);
-		auto i = groups->insert(targetGroup);
-		if (!i.second) {
+		if (!groups->insert(targetGroup).second) {
 			return;
 		}
 		m_Groups[targetGroup].libs--;
@@ -75,19 +74,20 @@ void Board::removeGroup(std::size_t offset, std::size_t x, std::size_t y) {
 	assert(offset == coordsToOffset(x, y));
 	assert(m_State[offset] == PlayerColour::WHITE ||
 	       m_State[offset] == PlayerColour::BLACK);
+	std::unordered_set<std::size_t> groups;
 	PlayerColour colour = m_State[offset];
 	m_State[offset] = PlayerColour::NONE;
 	if (x > 0) {
-		increaseLiberties(offset - 1, x - 1, y, colour);
+		increaseLiberties(offset - 1, x - 1, y, colour, &groups);
 	}
 	if (y > 0) {
-		increaseLiberties(offset - m_Size, x, y - 1, colour);
+		increaseLiberties(offset - m_Size, x, y - 1, colour, &groups);
 	}
 	if (x < m_Size - 1) {
-		increaseLiberties(offset + 1, x + 1, y, colour);
+		increaseLiberties(offset + 1, x + 1, y, colour, &groups);
 	}
 	if (y < m_Size - 1) {
-		increaseLiberties(offset + m_Size, x, y + 1, colour);
+		increaseLiberties(offset + m_Size, x, y + 1, colour, &groups);
 	}
 }
 
@@ -98,15 +98,18 @@ void Board::removeGroup(std::size_t offset, std::size_t x, std::size_t y) {
  * @param x X coord
  * @param y Y coord
  * @param colour Current colour
+ * @param groups Groups
  */
-void Board::increaseLiberties(
-    std::size_t offset, std::size_t x, std::size_t y, PlayerColour colour) {
-    if (m_State[offset] == colour) {
-        removeGroup(offset, x, y);
-    } else if (m_State[offset] == colour.inverse()) {
-        std::size_t group = getGroupLocation(offset);
-        m_Groups[group].libs++;
-    }
+void Board::increaseLiberties(std::size_t offset, std::size_t x, std::size_t y,
+    PlayerColour colour, std::unordered_set<std::size_t> *groups) {
+	if (m_State[offset] == colour) {
+		removeGroup(offset, x, y);
+	} else if (m_State[offset] == colour.inverse()) {
+		std::size_t group = getGroupLocation(offset);
+		if (groups->insert(group).second) {
+			m_Groups[group].libs++;
+		}
+	}
 }
 
 /**

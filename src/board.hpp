@@ -140,9 +140,10 @@ private:
 	 * @param x X coord
 	 * @param y Y coord
 	 * @param colour Current colour
+	 * @param groups Groups
 	 */
-	void increaseLiberties(
-	    std::size_t offset, std::size_t x, std::size_t y, PlayerColour colour);
+	void increaseLiberties(std::size_t offset, std::size_t x, std::size_t y,
+	    PlayerColour colour, std::unordered_set<std::size_t> *groups);
 
 public:
 	/**
