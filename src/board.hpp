@@ -116,13 +116,30 @@ private:
 	/**
 	 * Reduce number of liberties of a group
 	 *
+	 * @param x X coord
+	 * @param y Y coord
 	 * @param targetOffset Group to reduce libs
 	 * @param currentOffset Group to increase libs
 	 * @param groups Group set
+	 * @param sharedLibs Shared liberties
 	 * @param maxGroup Current max group
 	 */
-	void reduceLiberties(std::size_t targetOffset, std::size_t currentOffset,
-	    std::unordered_set<std::size_t> *groups, std::size_t *maxGroup);
+	void reduceLiberties(std::size_t x, std::size_t y, std::size_t targetOffset,
+	    std::size_t currentOffset, std::unordered_set<std::size_t> *groups,
+	    std::unordered_set<std::size_t> *sharedLibs, std::size_t *maxGroup);
+
+	/**
+	 * Check if the neihgbour group has a shared lib
+	 *
+	 * @param offset Offset
+	 * @param groups Group set
+	 * @param sharedLib Shared groups set
+	 * @param colour Colour
+	 * @return True if has a shared lib
+	 */
+	bool isSharedLib(std::size_t offset,
+	    std::unordered_set<std::size_t> *groups,
+	    std::unordered_set<std::size_t> *sharedLib, PlayerColour colour);
 
 	/**
 	 * Remove group of stones

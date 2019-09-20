@@ -38,21 +38,62 @@ void Board::mergeGroups(std::size_t from, std::size_t to) {
 }
 
 /**
+ * Check if the neihgbour group has a shared lib
+ *
+ * @param offset Offset
+ * @param groups Group set
+ * @param sharedLib Shared groups set
+ * @param colour Colour
+ * @return True if has a shared lib
+ */
+bool Board::isSharedLib(std::size_t offset,
+    std::unordered_set<std::size_t> *groups,
+    std::unordered_set<std::size_t> *sharedLib, PlayerColour colour) {
+	if (colour != m_State[offset]) {
+		return false;
+	}
+	const std::size_t group = getGroupLocation(offset);
+	if (groups->find(group) != groups->end()) {
+		return true;
+	}
+	sharedLib->insert(group);
+	return false;
+}
+
+/**
  * Reduce number of liberties of a group
  *
+ * @param x X coord
+ * @param y Y coord
  * @param targetOffset Group to reduce libs
  * @param currentOffset Group to increase libs
  * @param groups Group set
+ * @param sharedLibs Shared liberties
  * @param maxGroup Current max group
  */
-void Board::reduceLiberties(std::size_t targetOffset, std::size_t currentOffset,
-    std::unordered_set<std::size_t> *groups, std::size_t *maxGroup) {
+void Board::reduceLiberties(std::size_t x, std::size_t y,
+    std::size_t targetOffset, std::size_t currentOffset,
+    std::unordered_set<std::size_t> *groups,
+    std::unordered_set<std::size_t> *sharedLibs, std::size_t *maxGroup) {
 	if (m_State[targetOffset] == PlayerColour::NONE) {
+		if (x > 0 && isSharedLib(targetOffset - 1, groups, sharedLibs,
+		                 m_State[currentOffset]) ||
+		    y > 0 && isSharedLib(targetOffset - m_Size, groups, sharedLibs,
+		                 m_State[currentOffset]) ||
+		    x < m_Size - 1 && isSharedLib(targetOffset + 1, groups, sharedLibs,
+		                          m_State[currentOffset]) ||
+		    y < m_Size - 1 && isSharedLib(targetOffset + m_Size, groups,
+		                          sharedLibs, m_State[currentOffset])) {
+			return;
+		}
 		m_Groups[currentOffset].libs++;
 	} else {
 		std::size_t targetGroup = getGroupLocation(targetOffset);
 		if (!groups->insert(targetGroup).second) {
 			return;
+		}
+		if (sharedLibs->erase(targetGroup) > 0) {
+			m_Groups[currentOffset].libs--;
 		}
 		m_Groups[targetGroup].libs--;
 		if (m_State[targetGroup] == m_State[currentOffset] &&
@@ -126,22 +167,27 @@ void Board::playMove(std::size_t x, std::size_t y, PlayerColour colour) {
 	assert(m_State[offset] == PlayerColour::NONE);
 
 	std::unordered_set<std::size_t> groups;
+	std::unordered_set<std::size_t> sharedLibs;
 	std::size_t maxGroup = offset;
 	m_Groups[offset].libs = 0;
 	m_Groups[offset].stones = 1;
 	m_GroupRelation[offset] = offset;
 	m_State[offset] = colour;
 	if (x > 0) {
-		reduceLiberties(offset - 1, offset, &groups, &maxGroup);
+		reduceLiberties(
+		    x - 1, y, offset - 1, offset, &groups, &sharedLibs, &maxGroup);
 	}
 	if (y > 0) {
-		reduceLiberties(offset - m_Size, offset, &groups, &maxGroup);
+		reduceLiberties(
+		    x, y - 1, offset - m_Size, offset, &groups, &sharedLibs, &maxGroup);
 	}
 	if (x < m_Size - 1) {
-		reduceLiberties(offset + 1, offset, &groups, &maxGroup);
+		reduceLiberties(
+		    x + 1, y, offset + 1, offset, &groups, &sharedLibs, &maxGroup);
 	}
 	if (y < m_Size - 1) {
-		reduceLiberties(offset + m_Size, offset, &groups, &maxGroup);
+		reduceLiberties(
+		    x, y + 1, offset + m_Size, offset, &groups, &sharedLibs, &maxGroup);
 	}
 	for (auto &group : groups) {
 		if (group != maxGroup && m_State[group] == colour) {
