@@ -78,4 +78,32 @@ BOOST_AUTO_TEST_CASE(board_capture) {
 	BOOST_TEST(board.getLiberties(1, 1) == 5);
 }
 
+BOOST_AUTO_TEST_CASE(board_capture_eye) {
+	Board board(9);
+
+	board.playMove(1, 1, PlayerColour::BLACK);
+	board.playMove(2, 1, PlayerColour::BLACK);
+	board.playMove(3, 1, PlayerColour::BLACK);
+	board.playMove(1, 2, PlayerColour::BLACK);
+	board.playMove(1, 3, PlayerColour::BLACK);
+	board.playMove(3, 2, PlayerColour::BLACK);
+	board.playMove(2, 3, PlayerColour::BLACK);
+	board.playMove(3, 3, PlayerColour::BLACK);
+	board.playMove(0, 1, PlayerColour::WHITE);
+	board.playMove(0, 2, PlayerColour::WHITE);
+	board.playMove(0, 3, PlayerColour::WHITE);
+	board.playMove(1, 0, PlayerColour::WHITE);
+	board.playMove(2, 0, PlayerColour::WHITE);
+	board.playMove(3, 0, PlayerColour::WHITE);
+	board.playMove(4, 1, PlayerColour::WHITE);
+	board.playMove(4, 2, PlayerColour::WHITE);
+	board.playMove(4, 3, PlayerColour::WHITE);
+	board.playMove(1, 4, PlayerColour::WHITE);
+	board.playMove(2, 4, PlayerColour::WHITE);
+	board.playMove(3, 4, PlayerColour::WHITE);
+	board.playMove(2, 2, PlayerColour::WHITE);
+	BOOST_TEST(board.getValue(1, 1) == PlayerColour::NONE);
+	BOOST_TEST(board.getLiberties(2, 2) == 4);
+}
+
 BOOST_AUTO_TEST_SUITE_END()
