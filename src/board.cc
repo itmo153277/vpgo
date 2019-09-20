@@ -92,9 +92,6 @@ void Board::reduceLiberties(std::size_t x, std::size_t y,
 		if (!groups->insert(targetGroup).second) {
 			return;
 		}
-		if (sharedLibs->erase(targetGroup) > 0) {
-			m_Groups[currentOffset].libs--;
-		}
 		m_Groups[targetGroup].libs--;
 		if (m_State[targetGroup] == m_State[currentOffset] &&
 		    m_Groups[*maxGroup].stones < m_Groups[targetGroup].stones) {
@@ -167,7 +164,7 @@ void Board::playMove(std::size_t x, std::size_t y, PlayerColour colour) {
 	assert(m_State[offset] == PlayerColour::NONE);
 
 	std::unordered_set<std::size_t> groups;
-	std::unordered_set<std::size_t> sharedLibs;
+	std::unordered_set<std::size_t> sharedLibs[4];
 	std::size_t maxGroup = offset;
 	m_Groups[offset].libs = 0;
 	m_Groups[offset].stones = 1;
@@ -175,19 +172,27 @@ void Board::playMove(std::size_t x, std::size_t y, PlayerColour colour) {
 	m_State[offset] = colour;
 	if (x > 0) {
 		reduceLiberties(
-		    x - 1, y, offset - 1, offset, &groups, &sharedLibs, &maxGroup);
+		    x - 1, y, offset - 1, offset, &groups, sharedLibs, &maxGroup);
 	}
 	if (y > 0) {
 		reduceLiberties(
-		    x, y - 1, offset - m_Size, offset, &groups, &sharedLibs, &maxGroup);
+		    x, y - 1, offset - m_Size, offset, &groups, sharedLibs + 1, &maxGroup);
 	}
 	if (x < m_Size - 1) {
 		reduceLiberties(
-		    x + 1, y, offset + 1, offset, &groups, &sharedLibs, &maxGroup);
+		    x + 1, y, offset + 1, offset, &groups, sharedLibs + 2, &maxGroup);
 	}
 	if (y < m_Size - 1) {
 		reduceLiberties(
-		    x, y + 1, offset + m_Size, offset, &groups, &sharedLibs, &maxGroup);
+		    x, y + 1, offset + m_Size, offset, &groups, sharedLibs + 3, &maxGroup);
+	}
+	for (auto &sharedLibGroups : sharedLibs) {
+		for (auto &group : sharedLibGroups) {
+			if (groups.find(group) != groups.end()) {
+				m_Groups[offset].libs--;
+				break;
+			}
+		}
 	}
 	for (auto &group : groups) {
 		if (group != maxGroup && m_State[group] == colour) {
