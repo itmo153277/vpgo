@@ -30,6 +30,19 @@
 #include <unordered_set>
 #include "vpgo.hpp"
 #include "colour.hpp"
+#include "direction.hpp"
+
+/**
+ * Board traverse helper
+ */
+struct BoardTraverse {
+	/**
+	 * Iterator for traverse
+	 */
+	class iterator {
+		friend BoardTraverse;
+	};
+};
 
 /**
  * Board
@@ -41,9 +54,9 @@ private:
 	 */
 	struct GroupInfo {
 		/**
-		 * Number of liberties
+		 * Number of edges
 		 */
-		std::size_t libs = 0;
+		std::size_t edges[Direction::COUNT] = {};
 		/**
 		 * Number of stones
 		 */
@@ -114,34 +127,6 @@ private:
 	}
 
 	/**
-	 * Reduce number of liberties of a group
-	 *
-	 * @param x X coord
-	 * @param y Y coord
-	 * @param targetOffset Group to reduce libs
-	 * @param currentOffset Group to increase libs
-	 * @param groups Group set
-	 * @param sharedLibs Shared liberties
-	 * @param maxGroup Current max group
-	 */
-	void reduceLiberties(std::size_t x, std::size_t y, std::size_t targetOffset,
-	    std::size_t currentOffset, std::unordered_set<std::size_t> *groups,
-	    std::unordered_set<std::size_t> *sharedLibs, std::size_t *maxGroup);
-
-	/**
-	 * Check if the neihgbour group has a shared lib
-	 *
-	 * @param offset Offset
-	 * @param groups Group set
-	 * @param sharedLib Shared groups set
-	 * @param colour Colour
-	 * @return True if has a shared lib
-	 */
-	bool isSharedLib(std::size_t offset,
-	    std::unordered_set<std::size_t> *groups,
-	    std::unordered_set<std::size_t> *sharedLib, PlayerColour colour);
-
-	/**
 	 * Remove group of stones
 	 *
 	 * @param offset Offset
@@ -149,18 +134,6 @@ private:
 	 * @param y Y coord
 	 */
 	void removeGroup(std::size_t offset, std::size_t x, std::size_t y);
-
-	/**
-	 * Increase liberties or remove group
-	 *
-	 * @param offset Offset
-	 * @param x X coord
-	 * @param y Y coord
-	 * @param colour Current colour
-	 * @param groups Groups
-	 */
-	void increaseLiberties(std::size_t offset, std::size_t x, std::size_t y,
-	    PlayerColour colour, std::unordered_set<std::size_t> *groups);
 
 public:
 	/**
@@ -263,13 +236,14 @@ public:
 	}
 
 	/**
-	 * Get number of liberties
+	 * Get number of edges
 	 *
 	 * @param offset Location offset
+	 * @param dir Direction
 	 * @return Number of liberties
 	 */
-	std::size_t getLiberties(std::size_t offset) const {
-		return m_Groups[getGroupLocation(offset)].libs;
+	std::size_t getLiberties(std::size_t offset, Direction dir) const {
+		return m_Groups[getGroupLocation(offset)].edges[dir];
 	}
 
 	/**
@@ -277,10 +251,12 @@ public:
 	 *
 	 * @param x X coord
 	 * @param y Y coord
+	 * @param dir Direction
 	 * @return Number of liberties
 	 */
-	std::size_t getLiberties(std::size_t x, std::size_t y) const {
-		return getLiberties(coordsToOffset(x, y));
+	std::size_t getLiberties(
+	    std::size_t x, std::size_t y, Direction dir) const {
+		return getLiberties(coordsToOffset(x, y), dir);
 	}
 
 	/**

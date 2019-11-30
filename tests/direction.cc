@@ -1,6 +1,6 @@
 /**
- * @file board.cc
- * Tests for Board class
+ * @file direction.cc
+ * Tests for Direction class
  */
 /*
     Simple Go engine
@@ -20,24 +20,29 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <cstddef>
-#include <utility>
-#include <array>
 #include <boost/test/unit_test.hpp>
-#include "../src/board.hpp"
+#include "../src/direction.hpp"
 
-BOOST_AUTO_TEST_SUITE(board_tests)
+BOOST_AUTO_TEST_SUITE(direction_tests)
 
-template <typename T, std::size_t... S>
-constexpr std::array<T, sizeof...(S)> makeArrayHelper(
-    std::integer_sequence<std::size_t, S...>, T &&value) {
-	return {(S, value)...};
+BOOST_AUTO_TEST_CASE(direction_copy_ctor) {
+	Direction d = Direction::RIGHT;
+	BOOST_TEST(d == Direction::RIGHT);
 }
 
-template <std::size_t N, typename T>
-constexpr auto makeArray(T &&value) {
-	return makeArrayHelper(
-	    std::make_integer_sequence<std::size_t, N>(), std::forward<T>(value));
+BOOST_AUTO_TEST_CASE(direction_assign_ctor) {
+	Direction d;
+	d = Direction::RIGHT;
+	BOOST_TEST(d == Direction::RIGHT);
 }
+
+BOOST_AUTO_TEST_CASE(direction_inverse) {
+	BOOST_TEST(Direction(Direction::UP).inverse() == Direction::DOWN);
+	BOOST_TEST(Direction(Direction::DOWN).inverse() == Direction::UP);
+	BOOST_TEST(Direction(Direction::LEFT).inverse() == Direction::RIGHT);
+	BOOST_TEST(Direction(Direction::RIGHT).inverse() == Direction::LEFT);
+}
+
+static_assert(Direction(Direction::UP).inverse() == Direction::DOWN);
 
 BOOST_AUTO_TEST_SUITE_END()

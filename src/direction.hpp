@@ -1,7 +1,7 @@
 /**
- * @file colour.hpp
+ * @file direction.hpp
  *
- * Player colours
+ * Direction definitions
  */
 /*
     Simple Go engine
@@ -21,24 +21,22 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef SRC_COLOUR_HPP_
-#define SRC_COLOUR_HPP_
-
-#include "vpgo.hpp"
+#ifndef SRC_DIRECTION_HPP_
+#define SRC_DIRECTION_HPP_
 
 /**
- * Player colour
+ * Direction
  */
-class PlayerColour {
+class Direction {
 public:
 	/**
 	 * Value enum
 	 */
 	enum Value {
-		NONE,    //!< Empty
-		BLACK,   //!< Black
-		WHITE,   //!< White
-		NEUTRAL  //!< Neutral
+		UP,    //!< Up
+		LEFT,  //!< Left
+		DOWN,  //!< Down
+		RIGHT  //!< Right
 	};
 
 	/**
@@ -48,60 +46,63 @@ public:
 
 private:
 	/**
-	 * Internal value
+	 * Value
 	 */
-	Value m_val;
+	Value m_Val;
 
 public:
 	/**
 	 * Default ctor
 	 */
-	PlayerColour() = default;
+	Direction() = default;
 	/**
 	 * Conversion ctor
 	 */
-	constexpr PlayerColour(Value value)  // NOLINT(runtime/explicit)
-	    : m_val(value) {
+	constexpr Direction(Value value)  // NOLINT(runtime/explicit)
+	    : m_Val(value) {
 	}
 	/**
 	 * Default dtor
 	 */
-	~PlayerColour() = default;
-
+	~Direction() = default;
 	/**
-	 * Assignment by enum value
+	 * Assigment operator
 	 *
 	 * @param value Enum value
 	 * @return Self
 	 */
-	constexpr PlayerColour &operator=(Value value) {
-		m_val = value;
+	constexpr Direction &operator=(Value value) {
+		m_Val = value;
 		return *this;
 	}
 	/**
-	 * Conversion to enum value
+	 * Conversion to enum
 	 *
-	 * @return Value Enum value
+	 * @return Enum value
 	 */
 	constexpr operator Value() const {
-		return m_val;
+		return m_Val;
 	}
 
 	/**
-	 * Inverse colour
+	 * Invert direction
 	 *
-	 * @return Inverted colour
+	 * @return Invered direction
 	 */
-	constexpr PlayerColour inverse() const {
-		switch (m_val) {
-		case BLACK:
-			return WHITE;
-		case WHITE:
-			return BLACK;
+	constexpr Direction inverse() const {
+		switch (m_Val) {
+		case UP:
+			return DOWN;
+		case DOWN:
+			return UP;
+		case LEFT:
+			return RIGHT;
+		case RIGHT:
+			return LEFT;
 		default:
-			return m_val;
+			return m_Val;
 		}
 	}
 };
 
-#endif  // SRC_COLOUR_HPP_
+#endif  // SRC_DIRECTION_HPP_

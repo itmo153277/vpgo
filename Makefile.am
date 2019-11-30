@@ -6,10 +6,12 @@ VPGO_MAIN = \
 noinst_HEADERS = \
 	src/vpgo.hpp \
 	src/board.hpp \
-	src/colour.hpp
+	src/colour.hpp \
+	src/direction.hpp
 VPGO_UNITTESTS = \
 	tests/board.cc \
-	tests/colour.cc
+	tests/colour.cc \
+	tests/direction.cc
 VPGO_M4 = \
 	m4/deps.m4 \
 	m4/tests.m4
