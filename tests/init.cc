@@ -20,10 +20,12 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define BOOST_TEST_MODULE Unit tests
+#define BOOST_TEST_MODULE unit_tests
 #include <boost/test/unit_test.hpp>
 #include <boost/test/unit_test_log_formatter.hpp>
 #include <boost/test/execution_monitor.hpp>
+#include <string>
+#include <sstream>
 #include <iostream>
 
 using namespace boost;
@@ -35,7 +37,15 @@ using namespace boost::unit_test;
 class tap_formatter : public unit_test_log_formatter {
 private:
 	bool ng = false;
-	const_string module_name;
+	std::vector<std::string> modules;
+
+	const std::string module_name() const {
+		std::stringstream ss;
+		for (auto &module : modules) {
+			ss << '/' << module;
+		}
+		return ss.str();
+	}
 
 public:
 	void log_start(std::ostream &os, counter_t num_tests) {
@@ -51,9 +61,7 @@ public:
 		if (tu.p_type == TUT_CASE) {
 			ng = false;
 		}
-		if (tu.p_type == TUT_SUITE) {
-			module_name = tu.p_name;
-		}
+		modules.push_back(tu.p_name);
 	}
 	void test_unit_finish(
 	    std::ostream &os, test_unit const &tu, unsigned long elapsed) {
@@ -61,26 +69,22 @@ public:
 			if (ng) {
 				os << "not ";
 			}
-			os << "ok " << tu.p_name << " (" << module_name << ')' << std::endl;
+			os << "ok " << module_name() << std::endl;
 		}
-		if (tu.p_type == TUT_SUITE) {
-			module_name.clear();
-		}
+		modules.pop_back();
 		os << "# Finished " << tu.p_type_name << ' ' << tu.p_name << std::endl;
 	}
 	void test_unit_skipped(
 	    std::ostream &os, test_unit const &tu, const_string reason) {
 		if (tu.p_type == TUT_CASE) {
-			os << "ok " << tu.p_name << " (" << module_name
-			   << ") # SKIP: " << reason << std::endl;
+			os << "ok " << module_name() << " # SKIP: " << reason << std::endl;
 		}
 		os << "# Skipped " << tu.p_type_name << ' ' << tu.p_name << ": "
 		   << reason << std::endl;
 	}
 	void test_unit_skipped(std::ostream &os, test_unit const &tu) {
 		if (tu.p_type == TUT_CASE) {
-			os << "ok " << tu.p_name << " (" << module_name << ") # SKIP"
-			   << std::endl;
+			os << "ok " << module_name() << " # SKIP" << std::endl;
 		}
 		os << "# Skipped " << tu.p_type_name << ' ' << tu.p_name << std::endl;
 	}

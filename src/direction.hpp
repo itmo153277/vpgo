@@ -24,6 +24,8 @@
 #ifndef SRC_DIRECTION_HPP_
 #define SRC_DIRECTION_HPP_
 
+#include "vpgo.hpp"
+
 /**
  * Direction
  */
