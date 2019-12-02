@@ -44,6 +44,21 @@ std::ostream &operator<<(
 	return os;
 }
 
+/**
+ * Print operator for board traverser answers
+ *
+ * @param os Stream
+ * @param v Value
+ * @return Stream
+ */
+std::ostream &operator<<(std::ostream &os,
+    const std::vector<BoardTraverse::iterator::value_type> &v) {
+	for (auto x : v) {
+		os << x << "; ";
+	}
+	return os;
+}
+
 BOOST_AUTO_TEST_SUITE(board_tests)
 
 // clang-format off
@@ -96,9 +111,8 @@ const std::tuple<
 // clang-format on
 
 BOOST_DATA_TEST_CASE(board_traverse,
-    boost::unit_test::data::xrange(
-        sizeof(board_traverse_data) / sizeof(*board_traverse_data))) {
-	auto [x, y, offset, size, answer] = board_traverse_data[sample];
+    boost::unit_test::data::make(board_traverse_data), x, y, offset, size,
+    answer) {
 	BoardTraverse bt(x, y, offset, size);
 	std::vector<BoardTraverse::iterator::value_type> result(
 	    bt.begin(), bt.end());
