@@ -28,6 +28,8 @@
 #include <utility>
 #include <vector>
 #include <unordered_set>
+#include <iterator>
+#include <tuple>
 #include "vpgo.hpp"
 #include "colour.hpp"
 #include "direction.hpp"
@@ -40,8 +42,182 @@ struct BoardTraverse {
 	 * Iterator for traverse
 	 */
 	class iterator {
+	public:
+		using iterator_category = std::forward_iterator_tag;
+		using value_type =
+		    std::tuple<std::size_t, std::size_t, std::size_t, Direction>;
+		using reference = void;
+		using pointer = void;
+		using difference_type = int;
+
+	private:
+		/**
+		 * Reference
+		 */
+		const BoardTraverse *m_Ref;
+		/**
+		 * Current stage
+		 */
+		int m_i;
+
+		/**
+		 * No default ctor
+		 */
+		iterator() = delete;
+
+		/**
+		 * Iterator ctor
+		 *
+		 * @param ref Reference
+		 * @param i Current stage
+		 */
+		constexpr iterator(const BoardTraverse *ref, int i)
+		    : m_Ref(ref), m_i(i) {
+		}
+
+	public:
+		/**
+		 * Checks for inequality
+		 *
+		 * @param other Other iterator
+		 * @return this != other
+		 */
+		constexpr bool operator!=(const iterator &other) const {
+			return other.m_i != m_i;
+		}
+
+		/**
+		 * Increment
+		 *
+		 * @return Self
+		 */
+		constexpr iterator &operator++() {
+			m_i = m_Ref->getNext(m_i);
+			return *this;
+		}
+
+		/**
+		 * Increment
+		 *
+		 * @return Old copy
+		 */
+		constexpr iterator operator++(int) {
+			auto copy = *this;
+			m_i = m_Ref->getNext(m_i);
+			return copy;
+		}
+
+		/**
+		 * Dereference
+		 *
+		 * @return Value
+		 */
+		constexpr value_type operator*() const {
+			return m_Ref->getValue(m_i);
+		}
+
 		friend BoardTraverse;
 	};
+
+private:
+	/**
+	 * X coord
+	 */
+	std::size_t m_x;
+	/**
+	 * Y coord
+	 */
+	std::size_t m_y;
+	/**
+	 * Offset
+	 */
+	std::size_t m_Offset;
+	/**
+	 * Size
+	 */
+	std::size_t m_Size;
+
+	/**
+	 * Get next value
+	 *
+	 * @param i Current stage
+	 * @return Next value
+	 */
+	constexpr int getNext(int i = -1) const {
+		switch (i) {
+		case -1:
+			if (m_x > 0) {
+				return 0;
+			}
+		case 0:
+			if (m_y > 0) {
+				return 1;
+			}
+		case 1:
+			if (m_x < m_Size - 1) {
+				return 2;
+			}
+		case 2:
+			if (m_y < m_Size - 1) {
+				return 3;
+			}
+		}
+		return -1;
+	}
+	/**
+	 * Get value
+	 *
+	 * @param i Current stage
+	 * @return Value
+	 */
+	constexpr iterator::value_type getValue(int i) const {
+		switch (i) {
+		case 0:
+			return {m_x - 1, m_y, m_Offset - 1, Direction::LEFT};
+		case 1:
+			return {m_x, m_y - 1, m_Offset - m_Size, Direction::UP};
+		case 2:
+			return {m_x + 1, m_y, m_Offset + 1, Direction::RIGHT};
+		case 3:
+			return {m_x, m_y + 1, m_Offset + m_Size, Direction::DOWN};
+		}
+		return {};
+	}
+
+public:
+	/**
+	 * Deleted default ctor
+	 */
+	BoardTraverse() = delete;
+
+	/**
+	 * Ctor
+	 *
+	 * @param x X coordinate
+	 * @param y Y coordinate
+	 * @param offset Offset
+	 */
+	constexpr BoardTraverse(
+	    std::size_t x, std::size_t y, std::size_t offset, std::size_t size)
+	    : m_x(x), m_y(y), m_Offset(offset), m_Size(size) {
+	}
+
+	/**
+	 * Get begin iterator
+	 *
+	 * @return iterator
+	 */
+	constexpr iterator begin() const {
+		return iterator(this, getNext());
+	}
+	/**
+	 * Gen end iterator
+	 *
+	 * @return iterator
+	 */
+	constexpr iterator end() const {
+		return iterator(this, -1);
+	}
 };
 
 /**
