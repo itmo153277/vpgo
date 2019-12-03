@@ -110,9 +110,8 @@ const std::tuple<
 };
 // clang-format on
 
-BOOST_DATA_TEST_CASE(board_traverse,
-    boost::unit_test::data::make(board_traverse_data), x, y, offset, size,
-    answer) {
+BOOST_DATA_TEST_CASE(
+    board_traverse, board_traverse_data, x, y, offset, size, answer) {
 	BoardTraverse bt(x, y, offset, size);
 	std::vector<BoardTraverse::iterator::value_type> result(
 	    bt.begin(), bt.end());
