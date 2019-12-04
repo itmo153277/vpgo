@@ -38,16 +38,15 @@ BOOST_AUTO_TEST_CASE(colour_assign_ctor) {
 
 BOOST_AUTO_TEST_CASE(colour_inverse) {
 	BOOST_TEST(
-	    PlayerColour(PlayerColour::BLACK).inverse() == PlayerColour::WHITE);
+	    PlayerColour(PlayerColour::BLACK).invert() == PlayerColour::WHITE);
 	BOOST_TEST(
-	    PlayerColour(PlayerColour::WHITE).inverse() == PlayerColour::BLACK);
+	    PlayerColour(PlayerColour::WHITE).invert() == PlayerColour::BLACK);
+	BOOST_TEST(PlayerColour(PlayerColour::NONE).invert() == PlayerColour::NONE);
 	BOOST_TEST(
-	    PlayerColour(PlayerColour::NONE).inverse() == PlayerColour::NONE);
-	BOOST_TEST(
-	    PlayerColour(PlayerColour::NEUTRAL).inverse() == PlayerColour::NEUTRAL);
+	    PlayerColour(PlayerColour::NEUTRAL).invert() == PlayerColour::NEUTRAL);
 }
 
 static_assert(
-    PlayerColour(PlayerColour::BLACK).inverse() == PlayerColour::WHITE);
+    PlayerColour(PlayerColour::BLACK).invert() == PlayerColour::WHITE);
 
 BOOST_AUTO_TEST_SUITE_END()

@@ -92,7 +92,7 @@ public:
 	 *
 	 * @return Inverted colour
 	 */
-	constexpr PlayerColour inverse() const {
+	constexpr PlayerColour invert() const {
 		switch (m_val) {
 		case BLACK:
 			return WHITE;

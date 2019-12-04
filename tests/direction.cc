@@ -37,12 +37,12 @@ BOOST_AUTO_TEST_CASE(direction_assign_ctor) {
 }
 
 BOOST_AUTO_TEST_CASE(direction_inverse) {
-	BOOST_TEST(Direction(Direction::UP).inverse() == Direction::DOWN);
-	BOOST_TEST(Direction(Direction::DOWN).inverse() == Direction::UP);
-	BOOST_TEST(Direction(Direction::LEFT).inverse() == Direction::RIGHT);
-	BOOST_TEST(Direction(Direction::RIGHT).inverse() == Direction::LEFT);
+	BOOST_TEST(Direction(Direction::UP).invert() == Direction::DOWN);
+	BOOST_TEST(Direction(Direction::DOWN).invert() == Direction::UP);
+	BOOST_TEST(Direction(Direction::LEFT).invert() == Direction::RIGHT);
+	BOOST_TEST(Direction(Direction::RIGHT).invert() == Direction::LEFT);
 }
 
-static_assert(Direction(Direction::UP).inverse() == Direction::DOWN);
+static_assert(Direction(Direction::UP).invert() == Direction::DOWN);
 
 BOOST_AUTO_TEST_SUITE_END()

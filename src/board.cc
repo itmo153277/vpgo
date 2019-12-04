@@ -64,7 +64,7 @@ void Board::playMove(std::size_t x, std::size_t y, PlayerColour colour) {
 			m_Groups[offset].edges[direction]++;
 		} else {
 			const std::size_t group = getGroupLocation(toffset);
-			m_Groups[group].edges[direction.inverse()]--;
+			m_Groups[group].edges[direction.invert()]--;
 			if (m_State[group] == colour) {
 				neighbours.insert(group);
 				if (m_Groups[group].stones > m_Groups[maxGroup].stones) {

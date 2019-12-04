@@ -91,7 +91,7 @@ public:
 	 *
 	 * @return Invered direction
 	 */
-	constexpr Direction inverse() const {
+	constexpr Direction invert() const {
 		switch (m_Val) {
 		case UP:
 			return DOWN;
