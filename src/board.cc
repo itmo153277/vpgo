@@ -87,3 +87,27 @@ void Board::playMove(std::size_t x, std::size_t y, PlayerColour colour) {
 		}
 	}
 }
+
+/**
+ * Remove group of stones
+ *
+ * @param offset Offset
+ * @param x X coord
+ * @param y Y coord
+ */
+void Board::removeGroup(std::size_t offset, std::size_t x, std::size_t y) {
+	const PlayerColour colour = m_State[offset];
+	m_State[offset] = PlayerColour::NONE;
+	for (auto [tx, ty, toffset, direction] :
+	    BoardTraverse(x, y, offset, m_Size)) {
+		if (m_State[toffset] == PlayerColour::NONE) {
+			continue;
+		}
+		if (m_State[toffset] == colour) {
+			removeGroup(toffset, tx, ty);
+		} else {
+			const std::size_t group = getGroupLocation(toffset);
+			m_Groups[group].edges[direction.invert()]++;
+		}
+	}
+}
