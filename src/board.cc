@@ -96,7 +96,11 @@ void Board::playMove(std::size_t x, std::size_t y, PlayerColour colour) {
  * @param y Y coord
  */
 void Board::removeGroup(std::size_t offset, std::size_t x, std::size_t y) {
+	assert(x < m_Size);
+	assert(y < m_Size);
+	assert(offset == coordsToOffset(x, y));
 	const PlayerColour colour = m_State[offset];
+	assert(colour == PlayerColour::WHITE || colour == PlayerColour::BLACK);
 	m_State[offset] = PlayerColour::NONE;
 	for (auto [tx, ty, toffset, direction] :
 	    BoardTraverse(x, y, offset, m_Size)) {
