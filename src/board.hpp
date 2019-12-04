@@ -416,23 +416,23 @@ public:
 	 *
 	 * @param offset Location offset
 	 * @param dir Direction
-	 * @return Number of liberties
+	 * @return Number of edges
 	 */
-	std::size_t getLiberties(std::size_t offset, Direction dir) const {
+	std::size_t getEdges(std::size_t offset, Direction dir) const {
 		return m_Groups[getGroupLocation(offset)].edges[dir];
 	}
 
 	/**
-	 * Get number of liberties
+	 * Get number of edges
 	 *
 	 * @param x X coord
 	 * @param y Y coord
 	 * @param dir Direction
-	 * @return Number of liberties
+	 * @return Number of edges
 	 */
-	std::size_t getLiberties(
+	std::size_t getEdges(
 	    std::size_t x, std::size_t y, Direction dir) const {
-		return getLiberties(coordsToOffset(x, y), dir);
+		return getEdges(coordsToOffset(x, y), dir);
 	}
 
 	/**
