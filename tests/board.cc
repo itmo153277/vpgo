@@ -27,6 +27,8 @@
 #include <boost/test/data/test_case.hpp>
 #include "../src/board.hpp"
 
+namespace std {
+
 /**
  * Print operator for board traverser
  *
@@ -34,13 +36,11 @@
  * @param v Value
  * @return Stream
  */
-std::ostream &operator<<(
-    std::ostream &os, BoardTraverse::iterator::value_type v) {
-	auto [x, y, offset, dir] = v;
+ostream &operator<<(ostream &os, BoardTraverse::iterator::value_type v) {
+	auto [x, y, offset] = v;
 	os << "x = " << x << ", ";
 	os << "y = " << y << ", ";
-	os << "ofs = " << offset << ", ";
-	os << "dir = " << int(dir);
+	os << "ofs = " << offset;
 	return os;
 }
 
@@ -51,13 +51,15 @@ std::ostream &operator<<(
  * @param v Value
  * @return Stream
  */
-std::ostream &operator<<(std::ostream &os,
-    const std::vector<BoardTraverse::iterator::value_type> &v) {
+ostream &operator<<(
+    ostream &os, const vector<BoardTraverse::iterator::value_type> &v) {
 	for (auto x : v) {
 		os << x << "; ";
 	}
 	return os;
 }
+
+}  // namespace std
 
 BOOST_AUTO_TEST_SUITE(board_tests)
 
@@ -73,39 +75,39 @@ const std::tuple<
     std::vector<BoardTraverse::iterator::value_type>  // Answer
 > board_traverse_data[] = {
     {1, 1, 6, 5, {
-        {0, 1, 5, Direction::LEFT},
-        {1, 0, 1, Direction::UP},
-        {2, 1, 7, Direction::RIGHT},
-        {1, 2, 11, Direction::DOWN}
+        {0, 1, 5},
+        {1, 0, 1},
+        {2, 1, 7},
+        {1, 2, 11}
     }},
     {0, 1, 5, 5, {
-        {0, 0, 0, Direction::UP},
-        {1, 1, 6, Direction::RIGHT},
-        {0, 2, 10, Direction::DOWN}
+        {0, 0, 0},
+        {1, 1, 6},
+        {0, 2, 10}
     }},
     {1, 0, 1, 5, {
-        {0, 0, 0, Direction::LEFT},
-        {2, 0, 2, Direction::RIGHT},
-        {1, 1, 6, Direction::DOWN}
+        {0, 0, 0},
+        {2, 0, 2},
+        {1, 1, 6}
     }},
     {0, 0, 0, 5, {
-        {1, 0, 1, Direction::RIGHT},
-        {0, 1, 5, Direction::DOWN}
+        {1, 0, 1},
+        {0, 1, 5}
     }},
     {0, 0, 0, 1, {}},
     {4, 4, 24, 5, {
-        {3, 4, 23, Direction::LEFT},
-        {4, 3, 19, Direction::UP}
+        {3, 4, 23},
+        {4, 3, 19}
     }},
     {4, 3, 19, 5, {
-        {3, 3, 18, Direction::LEFT},
-        {4, 2, 14, Direction::UP},
-        {4, 4, 24, Direction::DOWN}
+        {3, 3, 18},
+        {4, 2, 14},
+        {4, 4, 24}
     }},
     {3, 4, 23, 5, {
-        {2, 4, 22, Direction::LEFT},
-        {3, 3, 18, Direction::UP},
-        {4, 4, 24, Direction::RIGHT}
+        {2, 4, 22},
+        {3, 3, 18},
+        {4, 4, 24}
     }}
 };
 // clang-format on

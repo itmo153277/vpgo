@@ -33,9 +33,7 @@
  */
 void Board::mergeGroups(std::size_t from, std::size_t to) {
 	m_GroupRelation[from] = to;
-	for (std::size_t i = 0; i < Direction::COUNT; ++i) {
-		m_Groups[to].edges[i] += m_Groups[from].edges[i];
-	}
+	m_Groups[to].edges += m_Groups[from].edges;
 	m_Groups[to].stones += m_Groups[from].stones;
 }
 
@@ -58,26 +56,20 @@ void Board::playMove(std::size_t x, std::size_t y, PlayerColour colour) {
 	std::size_t maxGroup = offset;
 	std::unordered_set<std::size_t> neighbours;
 	neighbours.insert(offset);
-	for (auto [tx, ty, toffset, direction] :
+	for (auto [tx, ty, toffset] :
 	    BoardTraverse(x, y, offset, m_Size)) {
 		if (m_State[toffset] == PlayerColour::NONE) {
-			m_Groups[offset].edges[direction]++;
+			m_Groups[offset].edges++;
 		} else {
 			const std::size_t group = getGroupLocation(toffset);
-			m_Groups[group].edges[direction.invert()]--;
+			m_Groups[group].edges--;
 			if (m_State[group] == colour) {
 				neighbours.insert(group);
 				if (m_Groups[group].stones > m_Groups[maxGroup].stones) {
 					maxGroup = group;
 				}
-			} else {
-				bool empty = true;
-				for (std::size_t i = 0; i < Direction::COUNT && empty; ++i) {
-					empty = m_Groups[group].edges[i] == 0;
-				}
-				if (empty) {
-					removeGroup(toffset, tx, ty);
-				}
+			} else if (m_Groups[group].edges == 0) {
+				removeGroup(toffset, tx, ty);
 			}
 		}
 	}
@@ -102,7 +94,7 @@ void Board::removeGroup(std::size_t offset, std::size_t x, std::size_t y) {
 	const PlayerColour colour = m_State[offset];
 	assert(colour == PlayerColour::WHITE || colour == PlayerColour::BLACK);
 	m_State[offset] = PlayerColour::NONE;
-	for (auto [tx, ty, toffset, direction] :
+	for (auto [tx, ty, toffset] :
 	    BoardTraverse(x, y, offset, m_Size)) {
 		if (m_State[toffset] == PlayerColour::NONE) {
 			continue;
@@ -111,7 +103,7 @@ void Board::removeGroup(std::size_t offset, std::size_t x, std::size_t y) {
 			removeGroup(toffset, tx, ty);
 		} else {
 			const std::size_t group = getGroupLocation(toffset);
-			m_Groups[group].edges[direction.invert()]++;
+			m_Groups[group].edges++;
 		}
 	}
 }

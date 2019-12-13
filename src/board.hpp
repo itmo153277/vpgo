@@ -32,7 +32,6 @@
 #include <tuple>
 #include "vpgo.hpp"
 #include "colour.hpp"
-#include "direction.hpp"
 
 /**
  * Board traverse helper
@@ -45,7 +44,7 @@ struct BoardTraverse {
 	public:
 		using iterator_category = std::forward_iterator_tag;
 		using value_type =
-		    std::tuple<std::size_t, std::size_t, std::size_t, Direction>;
+		    std::tuple<std::size_t, std::size_t, std::size_t>;
 		using reference = void;
 		using pointer = void;
 		using difference_type = int;
@@ -173,13 +172,13 @@ private:
 	constexpr iterator::value_type getValue(int i) const {
 		switch (i) {
 		case 0:
-			return {m_x - 1, m_y, m_Offset - 1, Direction::LEFT};
+			return {m_x - 1, m_y, m_Offset - 1};
 		case 1:
-			return {m_x, m_y - 1, m_Offset - m_Size, Direction::UP};
+			return {m_x, m_y - 1, m_Offset - m_Size};
 		case 2:
-			return {m_x + 1, m_y, m_Offset + 1, Direction::RIGHT};
+			return {m_x + 1, m_y, m_Offset + 1};
 		case 3:
-			return {m_x, m_y + 1, m_Offset + m_Size, Direction::DOWN};
+			return {m_x, m_y + 1, m_Offset + m_Size};
 		}
 		return {};
 	}
@@ -196,6 +195,7 @@ public:
 	 * @param x X coordinate
 	 * @param y Y coordinate
 	 * @param offset Offset
+	 * @param size Size
 	 */
 	constexpr BoardTraverse(
 	    std::size_t x, std::size_t y, std::size_t offset, std::size_t size)
@@ -232,7 +232,7 @@ private:
 		/**
 		 * Number of edges
 		 */
-		std::size_t edges[Direction::COUNT] = {};
+		std::size_t edges = 0;
 		/**
 		 * Number of stones
 		 */
@@ -415,11 +415,10 @@ public:
 	 * Get number of edges
 	 *
 	 * @param offset Location offset
-	 * @param dir Direction
 	 * @return Number of edges
 	 */
-	std::size_t getEdges(std::size_t offset, Direction dir) const {
-		return m_Groups[getGroupLocation(offset)].edges[dir];
+	std::size_t getEdges(std::size_t offset) const {
+		return m_Groups[getGroupLocation(offset)].edges;
 	}
 
 	/**
@@ -427,12 +426,11 @@ public:
 	 *
 	 * @param x X coord
 	 * @param y Y coord
-	 * @param dir Direction
 	 * @return Number of edges
 	 */
 	std::size_t getEdges(
-	    std::size_t x, std::size_t y, Direction dir) const {
-		return getEdges(coordsToOffset(x, y), dir);
+	    std::size_t x, std::size_t y) const {
+		return getEdges(coordsToOffset(x, y));
 	}
 
 	/**
