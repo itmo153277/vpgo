@@ -107,9 +107,9 @@ std::vector<PlayerColour> convertToVector(const Board &board) {
 
 /**
  * Convert board to string
- * 
+ *
  * @param board Board
- * @return String 
+ * @return String
  */
 std::string convertToString(const Board &board) {
 	std::vector<char> data;
@@ -130,10 +130,10 @@ std::string convertToString(const Board &board) {
 
 /**
  * Convert string to board
- * 
+ *
  * @param size Board size
  * @param s String
- * @return Board 
+ * @return Board
  */
 Board convertFromString(std::size_t size, const std::string &s) {
 	Board b(size);
@@ -247,7 +247,7 @@ BOOST_AUTO_TEST_CASE(board_assign_ctor) {
 BOOST_AUTO_TEST_CASE(board_move_ctor) {
 	Board b = convertFromString(3, testBoard);
 	Board temp = b;
-    Board copy = std::move(temp);
+	Board copy = std::move(temp);
 	auto b_data = convertToVector(b);
 	auto copy_data = convertToVector(copy);
 	BOOST_TEST(b_data == copy_data, boost::test_tools::per_element());
@@ -256,8 +256,8 @@ BOOST_AUTO_TEST_CASE(board_move_ctor) {
 BOOST_AUTO_TEST_CASE(board_move_assign_ctor) {
 	Board b = convertFromString(3, testBoard);
 	Board temp = b;
-    Board copy(3);
-    copy = std::move(temp);
+	Board copy(3);
+	copy = std::move(temp);
 	auto b_data = convertToVector(b);
 	auto copy_data = convertToVector(copy);
 	BOOST_TEST(b_data == copy_data, boost::test_tools::per_element());
