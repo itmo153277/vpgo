@@ -56,6 +56,8 @@ public:
 	}
 	void log_build_info(std::ostream &) {
 	}
+	void log_build_info(std::ostream &, bool) {
+	}
 	void test_unit_start(std::ostream &os, test_unit const &tu) {
 		os << "# Starting " << tu.p_type_name << ' ' << tu.p_name << std::endl;
 		if (tu.p_type == TUT_CASE) {
