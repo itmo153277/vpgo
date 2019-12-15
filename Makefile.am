@@ -14,12 +14,14 @@ VPGO_M4 = \
 	m4/deps.m4 \
 	m4/tests.m4
 
+noinst_LIBRARIES = libvpgomain.a
+libvpgomain_a_SOURCES = $(VPGO_MAIN)
+
 bin_PROGRAMS = vpgo
 vpgo_SOURCES = \
-	main.cpp \
-	$(VPGO_MAIN)
+	main.cpp
 vpgo_CPPFLAGS = $(AM_CPPFLAGS) $(BOOST_CPPFLAGS)
-vpgo_LDADD = $(BOOST_LDFLAGS) $(BOOST_PROGRAM_OPTIONS_LIB)
+vpgo_LDADD = $(BOOST_LDFLAGS) $(BOOST_PROGRAM_OPTIONS_LIB) libvpgomain.a
 
 if UNITTESTS_ENABLED
 UNITTESTS=unittests
@@ -30,10 +32,9 @@ TESTS = $(UNITTESTS)
 LOG_DRIVER = env AM_TAP_AWK='$(AWK)' $(SHELL) \
 	 $(top_srcdir)/auxdir/tap-driver.sh --ignore-exit
 unittests_CPPFLAGS = $(AM_CPPFLAGS) $(BOOST_CPPFLAGS) $(BOOST_UNIT_TEST_FRAMEWORK_CPPFLAGS)
-unittests_LDADD = $(BOOST_LDFLAGS) $(BOOST_UNIT_TEST_FRAMEWORK_LIB)
+unittests_LDADD = $(BOOST_LDFLAGS) $(BOOST_UNIT_TEST_FRAMEWORK_LIB) libvpgomain.a
 unittests_SOURCES = \
 	tests/init.cc \
-	$(VPGO_MAIN) \
 	$(VPGO_UNITTESTS)
 
 check_PROGRAMS = $(UNITTESTS)

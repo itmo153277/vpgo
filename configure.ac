@@ -24,6 +24,9 @@ AM_CONDITIONAL([MAKE_MAN], [test "x$DX_FLAG_man" = "x1"])
 
 AC_CONFIG_HEADERS([config.h])
 
+AC_PROG_RANLIB
+AM_PROG_AR
+
 AC_LANG([C++])
 AX_CXX_COMPILE_STDCXX_17([], [mandatory])
 
