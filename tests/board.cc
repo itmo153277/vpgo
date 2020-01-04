@@ -60,6 +60,36 @@ ostream &operator<<(
 	return os;
 }
 
+/**
+ * Print operator move descriptor
+ *
+ * @param os Stream
+ * @param v Value
+ * @return Stream
+ */
+ostream &operator<<(
+    ostream &os, std::tuple<std::size_t, std::size_t, PlayerColour> v) {
+	auto [x, y, colour] = v;
+	os << "x = " << x << ", ";
+	os << "y = " << y << ", ";
+	os << "col = " << colour;
+	return os;
+}
+
+/**
+ * Print operator for move list
+ *
+ * @param os Stream
+ * @param v Value
+ * @return Stream
+ */
+ostream &operator<<(ostream &os,
+    const vector<std::tuple<std::size_t, std::size_t, PlayerColour>> &v) {
+	std::copy(v.begin(), v.end(),
+	    std::ostream_iterator<BoardTraverse::iterator::value_type>(os, ", "));
+	return os;
+}
+
 }  // namespace std
 
 /**
@@ -261,6 +291,134 @@ BOOST_AUTO_TEST_CASE(board_move_assign_ctor) {
 	auto b_data = convertToVector(b);
 	auto copy_data = convertToVector(copy);
 	BOOST_TEST(b_data == copy_data, boost::test_tools::per_element());
+}
+
+// clang-format off
+/**
+ * Data for board play tests
+ */
+const std::tuple<
+    std::string,          // Board
+    std::vector<
+        std::tuple<
+            std::size_t,  // X
+            std::size_t,  // Y
+            PlayerColour  // Colour
+        >
+    >,                    // Moves
+    std::string           // Result
+> board_play_test_data[] = {
+    // Basic test
+    {
+        "     "
+        "     "
+        "     "
+        "     "
+        "     ",
+        {
+            {0, 0, PlayerColour::BLACK},
+            {1, 0, PlayerColour::WHITE}
+        },
+        "BW   "
+        "     "
+        "     "
+        "     "
+        "     "
+    },
+    // Corner capture
+    {
+        "WB   "
+        "     "
+        "     "
+        "     "
+        "     ",
+        {
+            {0, 1, PlayerColour::BLACK}
+        },
+        " B   "
+        "B    "
+        "     "
+        "     "
+        "     "
+    },
+    // Side capture
+    {
+        " BWB "
+        "     "
+        "     "
+        "     "
+        "     ",
+        {
+            {2, 1, PlayerColour::BLACK}
+        },
+        " B B "
+        "  B  "
+        "     "
+        "     "
+        "     "
+    },
+    // Centre capture
+    {
+        "     "
+        "  B  "
+        " BWB "
+        "     "
+        "     ",
+        {
+            {2, 3, PlayerColour::BLACK}
+        },
+        "     "
+        "  B  "
+        " B B "
+        "  B  "
+        "     "
+    },
+    // Ko
+    {
+        "     "
+        "  B  "
+        " BWB "
+        " W W "
+        "  W  ",
+        {
+            {2, 3, PlayerColour::BLACK},
+            {2, 2, PlayerColour::WHITE}
+        },
+        "     "
+        "  B  "
+        " BWB "
+        " W W "
+        "  W  "
+    },
+    // Shared liberties test
+    {
+        "WB BW"
+        "WB BW"
+        "WB BW"
+        "WWWWW"
+        "     ",
+        {
+            {2, 0, PlayerColour::BLACK},
+            {2, 2, PlayerColour::BLACK},
+            {2, 1, PlayerColour::WHITE},
+        },
+        "W   W"
+        "W W W"
+        "W   W"
+        "WWWWW"
+        "     "
+    }
+};
+// clang-format on
+
+BOOST_DATA_TEST_CASE(
+    board_play_tests, board_play_test_data, initial_state, moves, answer) {
+	Board b = convertFromString(5, initial_state);
+	for (auto [x, y, colour] : moves) {
+		b.playMove(x, y, colour);
+	}
+	auto b_string = convertToString(b);
+	BOOST_TEST(b_string == answer);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
