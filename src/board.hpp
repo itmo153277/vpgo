@@ -43,8 +43,7 @@ struct BoardTraverse {
 	class iterator {
 	public:
 		using iterator_category = std::forward_iterator_tag;
-		using value_type =
-		    std::tuple<std::size_t, std::size_t, std::size_t>;
+		using value_type = std::tuple<std::size_t, std::size_t, std::size_t>;
 		using reference = void;
 		using pointer = void;
 		using difference_type = int;
@@ -428,8 +427,7 @@ public:
 	 * @param y Y coord
 	 * @return Number of edges
 	 */
-	std::size_t getEdges(
-	    std::size_t x, std::size_t y) const {
+	std::size_t getEdges(std::size_t x, std::size_t y) const {
 		return getEdges(coordsToOffset(x, y));
 	}
 

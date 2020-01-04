@@ -56,8 +56,7 @@ void Board::playMove(std::size_t x, std::size_t y, PlayerColour colour) {
 	std::size_t maxGroup = offset;
 	std::unordered_set<std::size_t> neighbours;
 	neighbours.insert(offset);
-	for (auto [tx, ty, toffset] :
-	    BoardTraverse(x, y, offset, m_Size)) {
+	for (auto [tx, ty, toffset] : BoardTraverse(x, y, offset, m_Size)) {
 		if (m_State[toffset] == PlayerColour::NONE) {
 			m_Groups[offset].edges++;
 		} else {
@@ -94,8 +93,7 @@ void Board::removeGroup(std::size_t offset, std::size_t x, std::size_t y) {
 	const PlayerColour colour = m_State[offset];
 	assert(colour == PlayerColour::WHITE || colour == PlayerColour::BLACK);
 	m_State[offset] = PlayerColour::NONE;
-	for (auto [tx, ty, toffset] :
-	    BoardTraverse(x, y, offset, m_Size)) {
+	for (auto [tx, ty, toffset] : BoardTraverse(x, y, offset, m_Size)) {
 		if (m_State[toffset] == PlayerColour::NONE) {
 			continue;
 		}
