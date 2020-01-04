@@ -51,7 +51,7 @@ void Board::playMove(std::size_t x, std::size_t y, PlayerColour colour) {
 	const std::size_t offset = coordsToOffset(x, y);
 	assert(m_State[offset] == PlayerColour::NONE);
 	m_State[offset] = colour;
-	m_Groups[offset] = {{}, 1};
+	m_Groups[offset] = {0, 1};
 	m_GroupRelation[offset] = offset;
 	std::size_t maxGroup = offset;
 	std::unordered_set<std::size_t> neighbours;
