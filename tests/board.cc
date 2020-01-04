@@ -1,5 +1,5 @@
 /**
- * @file board.cc
+ * @file tests/board.cc
  * Tests for Board class
  */
 /*

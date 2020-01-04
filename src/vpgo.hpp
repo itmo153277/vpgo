@@ -1,6 +1,5 @@
-
 /**
- * @file vpgo.hpp
+ * @file src/vpgo.hpp
  * Global header config
  */
 /*

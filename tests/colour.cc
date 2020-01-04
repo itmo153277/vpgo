@@ -1,5 +1,5 @@
 /**
- * @file colour.cc
+ * @file tests/colour.cc
  * Tests for PlayerColour class
  */
 /*

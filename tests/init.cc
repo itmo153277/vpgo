@@ -1,5 +1,5 @@
 /**
- * @file init.cc
+ * @file tests/init.cc
  * TAP log formatter for boost unit tests
  */
 /*

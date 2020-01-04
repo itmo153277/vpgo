@@ -1,5 +1,5 @@
 /**
- * @file board.hpp
+ * @file src/board.hpp
  * Board
  */
 /*

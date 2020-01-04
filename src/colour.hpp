@@ -1,5 +1,5 @@
 /**
- * @file colour.hpp
+ * @file src/colour.hpp
  *
  * Player colours
  */

@@ -1,5 +1,5 @@
 /**
- * @file board.cc
+ * @file src/board.cc
  * Implementation for Board class
  */
 /*
