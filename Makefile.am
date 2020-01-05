@@ -41,17 +41,21 @@ check_PROGRAMS = $(UNITTESTS)
 
 @DX_RULES@
 
+$(DX_CONFIG): doxygen.cfg
+	$(AM_V_GEN)( \
+		cp $< $@ ; \
+		$(DX_DOXYGEN) -s -u $@ > /dev/null \
+	)
+
 EXTRA_DIST = \
 	autogen.sh \
 	README.md \
-	$(DX_CONFIG) \
+	doxygen.cfg \
 	$(VPGO_M4)
 
-MOSTLYCLEANFILES = $(DX_CLEANFILES)
+MOSTLYCLEANFILES = $(DX_CLEANFILES) $(DX_CONFIG)
 
 if MAKE_DOXYGEN_MAN
-
 man3_MANS = $(top_builddir)/doc/man/man3/*.3
-$(man3_MANS): doxygen-doc
-
+$(man3_MANS): doxygen-run
 endif
