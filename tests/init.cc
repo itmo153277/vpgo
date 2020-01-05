@@ -37,15 +37,6 @@ using namespace boost::unit_test;
 class tap_formatter : public unit_test_log_formatter {
 private:
 	bool ng = false;
-	std::vector<std::string> modules;
-
-	const std::string module_name() const {
-		std::stringstream ss;
-		for (auto &module : modules) {
-			ss << '/' << module;
-		}
-		return ss.str();
-	}
 
 public:
 	void log_start(std::ostream &os, counter_t num_tests) {
@@ -63,7 +54,6 @@ public:
 		if (tu.p_type == TUT_CASE) {
 			ng = false;
 		}
-		modules.push_back(tu.p_name);
 	}
 	void test_unit_finish(
 	    std::ostream &os, test_unit const &tu, unsigned long elapsed) {
@@ -71,22 +61,27 @@ public:
 			if (ng) {
 				os << "not ";
 			}
-			os << "ok " << module_name() << std::endl;
+			os << "ok " << tu.full_name() << std::endl;
 		}
-		modules.pop_back();
 		os << "# Finished " << tu.p_type_name << ' ' << tu.p_name << std::endl;
 	}
 	void test_unit_skipped(
 	    std::ostream &os, test_unit const &tu, const_string reason) {
+		if (!tu.is_enabled()) {
+			return;
+		}
 		if (tu.p_type == TUT_CASE) {
-			os << "ok " << module_name() << " # SKIP: " << reason << std::endl;
+			os << "ok " << tu.full_name() << " # SKIP: " << reason << std::endl;
 		}
 		os << "# Skipped " << tu.p_type_name << ' ' << tu.p_name << ": "
 		   << reason << std::endl;
 	}
 	void test_unit_skipped(std::ostream &os, test_unit const &tu) {
+		if (!tu.is_enabled()) {
+			return;
+		}
 		if (tu.p_type == TUT_CASE) {
-			os << "ok " << module_name() << " # SKIP" << std::endl;
+			os << "ok " << tu.full_name() << " # SKIP" << std::endl;
 		}
 		os << "# Skipped " << tu.p_type_name << ' ' << tu.p_name << std::endl;
 	}
@@ -142,8 +137,12 @@ public:
  */
 struct TestConfiguration {
 	TestConfiguration() {
-		unit_test_log.set_formatter(new tap_formatter());
-		unit_test_log.set_threshold_level(log_test_units);
+		int argc = framework::master_test_suite().argc;
+		char **argv = framework::master_test_suite().argv;
+		if (argc <= 1 || std::string(argv[1]) != "NO_TAP") {
+			unit_test_log.set_formatter(new tap_formatter());
+			unit_test_log.set_threshold_level(log_test_units);
+		}
 	}
 };
 

@@ -29,7 +29,7 @@ else
 UNITTESTS=
 endif
 TESTS = $(UNITTESTS)
-LOG_DRIVER = env AM_TAP_AWK='$(AWK)' $(SHELL) \
+LOG_DRIVER = env AM_TAP_AWK='$(AWK)' BOOST_TEST_REPORT_LEVEL=no $(SHELL) \
 	 $(top_srcdir)/auxdir/tap-driver.sh --ignore-exit
 unittests_CPPFLAGS = $(AM_CPPFLAGS) $(BOOST_CPPFLAGS) $(BOOST_UNIT_TEST_FRAMEWORK_CPPFLAGS)
 unittests_LDADD = $(BOOST_LDFLAGS) $(BOOST_UNIT_TEST_FRAMEWORK_LIB) libvpgomain.a
