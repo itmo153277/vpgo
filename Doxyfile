@@ -231,7 +231,7 @@ GENERATE_MAN           = $(GENERATE_MAN)
 MAN_OUTPUT             = man
 MAN_EXTENSION          = .3
 MAN_SUBDIR             =
-MAN_LINKS              = YES
+MAN_LINKS              = NO
 
 #---------------------------------------------------------------------------
 # Configuration options related to the XML output

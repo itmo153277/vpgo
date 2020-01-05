@@ -49,9 +49,9 @@ EXTRA_DIST = \
 
 MOSTLYCLEANFILES = $(DX_CLEANFILES)
 
-if MAKE_MAN
+if MAKE_DOXYGEN_MAN
 
-dist_man3_MANS = $(top_builddir)/doc/man/man3/*.3
-$(dist_man3_MANS): doxygen-doc
+man3_MANS = $(top_builddir)/doc/man/man3/*.3
+$(man3_MANS): doxygen-doc
 
 endif
