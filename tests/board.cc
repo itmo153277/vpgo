@@ -29,6 +29,7 @@
 #include <boost/test/data/test_case.hpp>
 #include "../src/board.hpp"
 
+using move_desctiption = std::tuple<std::size_t, std::size_t, PlayerColour>;
 namespace std {
 
 /**
@@ -67,8 +68,7 @@ ostream &operator<<(
  * @param v Value
  * @return Stream
  */
-ostream &operator<<(
-    ostream &os, std::tuple<std::size_t, std::size_t, PlayerColour> v) {
+ostream &operator<<(ostream &os, move_desctiption v) {
 	auto [x, y, colour] = v;
 	os << "x = " << x << ", ";
 	os << "y = " << y << ", ";
@@ -83,10 +83,9 @@ ostream &operator<<(
  * @param v Value
  * @return Stream
  */
-ostream &operator<<(ostream &os,
-    const vector<std::tuple<std::size_t, std::size_t, PlayerColour>> &v) {
-	std::copy(v.begin(), v.end(),
-	    std::ostream_iterator<BoardTraverse::iterator::value_type>(os, ", "));
+ostream &operator<<(ostream &os, const vector<move_desctiption> &v) {
+	std::copy(
+	    v.begin(), v.end(), std::ostream_iterator<move_desctiption>(os, ", "));
 	return os;
 }
 
