@@ -24,12 +24,45 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/test/unit_test_log_formatter.hpp>
 #include <boost/test/execution_monitor.hpp>
+#include <boost/test/tree/visitor.hpp>
+#include <boost/test/tree/traverse.hpp>
 #include <string>
 #include <sstream>
 #include <iostream>
 
 using namespace boost;
 using namespace boost::unit_test;
+
+/**
+ * Enumerator for tests
+ */
+struct test_enumerator {
+	using container = std::vector<const test_case *>;
+	using iterator = container::iterator;
+	container tests;
+
+	struct visitor : test_tree_visitor {
+		test_enumerator *ref;
+
+		visitor(test_enumerator *r) : ref(r) {
+		}
+		void visit(const test_case &tc) {
+			ref->tests.push_back(&tc);
+		}
+	};
+
+	explicit test_enumerator(const test_unit &tu) : tests() {
+		visitor v{this};
+		traverse_test_tree(tu, v);
+	}
+
+	iterator begin() {
+		return tests.begin();
+	}
+	iterator end() {
+		return tests.end();
+	}
+};
 
 /**
  * Simple implementation of TAP log formatter
@@ -70,20 +103,11 @@ public:
 		if (!tu.is_enabled()) {
 			return;
 		}
-		if (tu.p_type == TUT_CASE) {
-			os << "ok " << tu.full_name() << " # SKIP: " << reason << std::endl;
+		for (auto tc: test_enumerator(tu)) {
+			os << "ok " << tc->full_name() << " # SKIP: " << reason << std::endl;
 		}
 		os << "# Skipped " << tu.p_type_name << ' ' << tu.p_name << ": "
 		   << reason << std::endl;
-	}
-	void test_unit_skipped(std::ostream &os, test_unit const &tu) {
-		if (!tu.is_enabled()) {
-			return;
-		}
-		if (tu.p_type == TUT_CASE) {
-			os << "ok " << tu.full_name() << " # SKIP" << std::endl;
-		}
-		os << "# Skipped " << tu.p_type_name << ' ' << tu.p_name << std::endl;
 	}
 	void test_unit_aborted(std::ostream &os, test_unit const &tu) {
 		os << "# Aborted " << tu.p_type_name << ' ' << tu.p_name << std::endl;
