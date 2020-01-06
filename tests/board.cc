@@ -29,7 +29,11 @@
 #include <boost/test/data/test_case.hpp>
 #include "../src/board.hpp"
 
-using move_desctiption = std::tuple<std::size_t, std::size_t, PlayerColour>;
+/**
+ * Move description
+ */
+using move_description = std::tuple<std::size_t, std::size_t, PlayerColour>;
+
 namespace std {
 
 /**
@@ -68,7 +72,7 @@ ostream &operator<<(
  * @param v Value
  * @return Stream
  */
-ostream &operator<<(ostream &os, move_desctiption v) {
+ostream &operator<<(ostream &os, move_description v) {
 	auto [x, y, colour] = v;
 	os << "x = " << x << ", ";
 	os << "y = " << y << ", ";
@@ -83,9 +87,9 @@ ostream &operator<<(ostream &os, move_desctiption v) {
  * @param v Value
  * @return Stream
  */
-ostream &operator<<(ostream &os, const vector<move_desctiption> &v) {
+ostream &operator<<(ostream &os, const vector<move_description> &v) {
 	std::copy(
-	    v.begin(), v.end(), std::ostream_iterator<move_desctiption>(os, ", "));
+	    v.begin(), v.end(), std::ostream_iterator<move_description>(os, ", "));
 	return os;
 }
 
@@ -297,15 +301,9 @@ BOOST_AUTO_TEST_CASE(board_move_assign_ctor) {
  * Data for board play tests
  */
 const std::tuple<
-    std::string,          // Board
-    std::vector<
-        std::tuple<
-            std::size_t,  // X
-            std::size_t,  // Y
-            PlayerColour  // Colour
-        >
-    >,                    // Moves
-    std::string           // Result
+    std::string,                    // Board
+    std::vector<move_description>,  // Moves
+    std::string                     // Result
 > board_play_test_data[] = {
     // Basic test
     {
