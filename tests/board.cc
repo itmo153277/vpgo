@@ -418,4 +418,102 @@ BOOST_DATA_TEST_CASE(
 	BOOST_TEST(b_string == answer);
 }
 
+// clang-format off
+/**
+ * Data for suicide test
+ */
+const std::tuple<
+    std::size_t,       // Board size
+    std::string,       // Position
+    move_description,  // Move
+    bool               // Suicide or not
+> board_suicide_test_data[] = {
+    // In 1x1-board everything is suicide
+    {1, " ", {0, 0, PlayerColour::BLACK}, true},
+    // Simple case
+    {
+        3,
+        "   "
+        "   "
+        "   ",
+        {1, 1, PlayerColour::BLACK},
+        false
+    },
+    // Suicide in a corner
+    {
+        3,
+        " W "
+        "W  "
+        "   ",
+        {0, 0, PlayerColour::BLACK},
+        true
+    },
+    {
+        3,
+        " BB"
+        "BBW"
+        "BW ",
+        {0, 0, PlayerColour::BLACK},
+        true
+    },
+    {
+        3,
+        " BB"
+        "B W"
+        "BW ",
+        {0, 0, PlayerColour::BLACK},
+        false
+    },
+    // Eye suicide test
+    {
+        5,
+        "     "
+        " WWW "
+        " W W "
+        " WWW "
+        "     ",
+        {2, 2, PlayerColour::BLACK},
+        true
+    },
+    {
+        5,
+        " BBB "
+        "BWWWB"
+        "BW WB"
+        "BWWWB"
+        " BBB ",
+        {2, 2, PlayerColour::BLACK},
+        false
+    },
+    {
+        5,
+        "  W  "
+        " WBW "
+        "WB BW"
+        " WBW "
+        "  W  ",
+        {2, 2, PlayerColour::BLACK},
+        true
+    },
+    {
+        5,
+        "  W  "
+        " WBW "
+        "WB BW"
+        "BWWWB"
+        " BBB ",
+        {2, 2, PlayerColour::BLACK},
+        false
+    }
+};
+// clang-format on
+
+BOOST_DATA_TEST_CASE(board_suicide_tests, board_suicide_test_data, size,
+    position, move, answer) {
+	Board b = convertFromString(size, position);
+	auto [x, y, colour] = move;
+	bool result = b.isSuicide(x, y, colour);
+	BOOST_CHECK(result == answer);
+}
+
 BOOST_AUTO_TEST_SUITE_END()

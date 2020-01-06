@@ -24,6 +24,7 @@
 #include <cassert>
 #include <cstddef>
 #include <unordered_set>
+#include <unordered_map>
 
 /**
  * Merge two groups into one
@@ -104,4 +105,43 @@ void Board::removeGroup(std::size_t offset, std::size_t x, std::size_t y) {
 			m_Groups[group].edges++;
 		}
 	}
+}
+
+/**
+ * Check if move is a suicide
+ *
+ * @param x X coord
+ * @param y Y coord
+ * @param colour Stone colour
+ * @return True if suicide
+ */
+bool Board::isSuicide(std::size_t x, std::size_t y, PlayerColour colour) {
+	std::unordered_map<std::size_t, std::size_t> sameNeightbours;
+	std::unordered_map<std::size_t, std::size_t> oppositeNeightbours;
+	for (auto [tx, ty, toffset] :
+	    BoardTraverse(x, y, coordsToOffset(x, y), m_Size)) {
+		if (m_State[toffset] == PlayerColour::NONE) {
+			return false;
+		}
+		const std::size_t group = getGroupLocation(toffset);
+		if (m_State[group] == colour) {
+			auto neightbour =
+			    sameNeightbours.insert({group, m_Groups[group].edges}).first;
+			--neightbour->second;
+		} else {
+			auto neightbour =
+			    oppositeNeightbours.insert({group, m_Groups[group].edges})
+			        .first;
+			--neightbour->second;
+			if (neightbour->second == 0) {
+				return false;
+			}
+		}
+	}
+	for (auto [group, edges] : sameNeightbours) {
+		if (edges > 0) {
+			return false;
+		}
+	}
+	return true;
 }
