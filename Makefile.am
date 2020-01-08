@@ -11,7 +11,8 @@ noinst_HEADERS = \
 	src/hash.hpp
 VPGO_UNITTESTS = \
 	tests/board.cc \
-	tests/colour.cc
+	tests/colour.cc \
+	tests/hash.cc
 VPGO_M4 = \
 	m4/deps.m4 \
 	m4/tests.m4

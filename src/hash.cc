@@ -43,7 +43,6 @@ HashValues::HashValues() {
 void HashValues::seed(int newSeed) {
 	m_RandomEngine.seed(newSeed);
 	m_InitialValue = m_RandomEngine();
-	m_Values.resize(m_Size * 2);
 	for (auto &v : m_Values) {
 		v = m_RandomEngine();
 	}
