@@ -103,8 +103,9 @@ public:
 		if (!tu.is_enabled()) {
 			return;
 		}
-		for (auto tc: test_enumerator(tu)) {
-			os << "ok " << tc->full_name() << " # SKIP: " << reason << std::endl;
+		for (auto tc : test_enumerator(tu)) {
+			os << "ok " << tc->full_name() << " # SKIP: " << reason
+			   << std::endl;
 		}
 		os << "# Skipped " << tu.p_type_name << ' ' << tu.p_name << ": "
 		   << reason << std::endl;
