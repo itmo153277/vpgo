@@ -25,6 +25,7 @@
 
 #include <cassert>
 #include <cstddef>
+#include <cstdint>
 #include <utility>
 #include <vector>
 #include <unordered_set>
@@ -32,6 +33,7 @@
 #include <tuple>
 #include "vpgo.hpp"
 #include "colour.hpp"
+#include "hash.hpp"
 
 /**
  * Board traverse helper
@@ -254,6 +256,10 @@ private:
 	 * Releation between groups
 	 */
 	std::vector<std::size_t> m_GroupRelation;
+	/**
+	 * Hash
+	 */
+	std::uint64_t m_Hash;
 
 	/**
 	 * Convert coords to offset
@@ -324,7 +330,8 @@ public:
 	    : m_Size(size)
 	    , m_State(size * size, PlayerColour::NONE)
 	    , m_Groups(size * size)
-	    , m_GroupRelation(size * size) {
+	    , m_GroupRelation(size * size)
+	    , m_Hash(HashValues::getInstance()->getInitialValue()) {
 	}
 	/**
 	 * Copy ctor
@@ -358,6 +365,24 @@ public:
 	 * @return Self
 	 */
 	Board &operator=(Board &&s) noexcept = default;
+	/**
+	 * Equality comparison
+	 *
+	 * @param s Other board
+	 * @return True if same position
+	 */
+	bool operator==(const Board &s) {
+		return m_Size == s.m_Size && m_Hash == s.m_Hash;
+	}
+	/**
+	 * Inequality comparison
+	 *
+	 * @param s Other board
+	 * @return True if same position
+	 */
+	bool operator!=(const Board &s) {
+		return !(*this == s);
+	}
 
 	/**
 	 * Size
@@ -427,6 +452,15 @@ public:
 	 * @return True if suicide
 	 */
 	bool isSuicide(std::size_t x, std::size_t y, PlayerColour colour);
+
+	/**
+	 * Get hash
+	 *
+	 * @return Hash
+	 */
+	std::uint64_t getHash() const {
+		return m_Hash;
+	}
 };
 
 #endif  // SRC_BOARD_HPP_

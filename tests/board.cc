@@ -184,7 +184,16 @@ Board convertFromString(std::size_t size, const std::string &s) {
 	return b;
 }
 
-BOOST_AUTO_TEST_SUITE(board_tests)
+/**
+ * Fixture for board tests
+ */
+struct board_fixture {
+	board_fixture() {
+		HashValues::getInstance()->init(5 * 5);
+	}
+};
+
+BOOST_FIXTURE_TEST_SUITE(board_tests, board_fixture)
 
 // clang-format off
 /**
@@ -266,7 +275,7 @@ BOOST_AUTO_TEST_CASE(board_copy_ctor) {
 	auto b_data = convertToVector(b);
 	auto copy_data = convertToVector(copy);
 	BOOST_TEST(b_data == copy_data, boost::test_tools::per_element());
-    b.playMove(0, 0, PlayerColour::BLACK);
+	b.playMove(0, 0, PlayerColour::BLACK);
 	auto copy_str = convertToString(copy);
 	BOOST_TEST(copy_str == testBoard);
 }
@@ -278,7 +287,7 @@ BOOST_AUTO_TEST_CASE(board_assign_ctor) {
 	auto b_data = convertToVector(b);
 	auto copy_data = convertToVector(copy);
 	BOOST_TEST(b_data == copy_data, boost::test_tools::per_element());
-    b.playMove(0, 0, PlayerColour::BLACK);
+	b.playMove(0, 0, PlayerColour::BLACK);
 	auto copy_str = convertToString(copy);
 	BOOST_TEST(copy_str == testBoard);
 }
@@ -290,7 +299,7 @@ BOOST_AUTO_TEST_CASE(board_move_ctor) {
 	auto b_data = convertToVector(b);
 	auto copy_data = convertToVector(copy);
 	BOOST_TEST(b_data == copy_data, boost::test_tools::per_element());
-    b.playMove(0, 0, PlayerColour::BLACK);
+	b.playMove(0, 0, PlayerColour::BLACK);
 	auto copy_str = convertToString(copy);
 	BOOST_TEST(copy_str == testBoard);
 }
@@ -303,9 +312,37 @@ BOOST_AUTO_TEST_CASE(board_move_assign_ctor) {
 	auto b_data = convertToVector(b);
 	auto copy_data = convertToVector(copy);
 	BOOST_TEST(b_data == copy_data, boost::test_tools::per_element());
-    b.playMove(0, 0, PlayerColour::BLACK);
+	b.playMove(0, 0, PlayerColour::BLACK);
 	auto copy_str = convertToString(copy);
 	BOOST_TEST(copy_str == testBoard);
+}
+
+BOOST_AUTO_TEST_CASE(board_hash_check) {
+	HashValues::getInstance()->seed(0xEAEAEAEA);
+	Board b = convertFromString(3, testBoard);
+	Board copy = b;
+	BOOST_TEST(b.getHash() == copy.getHash());
+	b.playMove(0, 0, PlayerColour::BLACK);
+	BOOST_TEST(b.getHash() != copy.getHash());
+}
+
+BOOST_AUTO_TEST_CASE(board_eq_check) {
+	HashValues::getInstance()->seed(0xEAEAEAEA);
+	bool result;
+	Board b1(2);
+	Board b2(3);
+	Board b3(3);
+	result = b1 != b2;
+	BOOST_TEST(result);
+	result = b2 == b3;
+	BOOST_TEST(result);
+	b1 = convertFromString(3, testBoard);
+	b2 = b1;
+	result = b1 == b2;
+	BOOST_TEST(result);
+	b1.playMove(0, 0, PlayerColour::BLACK);
+	result = b1 != b2;
+	BOOST_TEST(result);
 }
 
 // clang-format off

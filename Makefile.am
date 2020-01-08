@@ -2,11 +2,13 @@ ACLOCAL_AMFLAGS = -I m4
 AUTOMAKE_OPTIONS = subdir-objects
 
 VPGO_MAIN = \
-	src/board.cc
+	src/board.cc \
+	src/hash.cc
 noinst_HEADERS = \
 	src/vpgo.hpp \
 	src/board.hpp \
-	src/colour.hpp
+	src/colour.hpp \
+	src/hash.hpp
 VPGO_UNITTESTS = \
 	tests/board.cc \
 	tests/colour.cc
