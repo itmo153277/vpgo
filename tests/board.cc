@@ -266,6 +266,9 @@ BOOST_AUTO_TEST_CASE(board_copy_ctor) {
 	auto b_data = convertToVector(b);
 	auto copy_data = convertToVector(copy);
 	BOOST_TEST(b_data == copy_data, boost::test_tools::per_element());
+    b.playMove(0, 0, PlayerColour::BLACK);
+	auto copy_str = convertToString(copy);
+	BOOST_TEST(copy_str == testBoard);
 }
 
 BOOST_AUTO_TEST_CASE(board_assign_ctor) {
@@ -275,6 +278,9 @@ BOOST_AUTO_TEST_CASE(board_assign_ctor) {
 	auto b_data = convertToVector(b);
 	auto copy_data = convertToVector(copy);
 	BOOST_TEST(b_data == copy_data, boost::test_tools::per_element());
+    b.playMove(0, 0, PlayerColour::BLACK);
+	auto copy_str = convertToString(copy);
+	BOOST_TEST(copy_str == testBoard);
 }
 
 BOOST_AUTO_TEST_CASE(board_move_ctor) {
@@ -284,6 +290,9 @@ BOOST_AUTO_TEST_CASE(board_move_ctor) {
 	auto b_data = convertToVector(b);
 	auto copy_data = convertToVector(copy);
 	BOOST_TEST(b_data == copy_data, boost::test_tools::per_element());
+    b.playMove(0, 0, PlayerColour::BLACK);
+	auto copy_str = convertToString(copy);
+	BOOST_TEST(copy_str == testBoard);
 }
 
 BOOST_AUTO_TEST_CASE(board_move_assign_ctor) {
@@ -294,6 +303,9 @@ BOOST_AUTO_TEST_CASE(board_move_assign_ctor) {
 	auto b_data = convertToVector(b);
 	auto copy_data = convertToVector(copy);
 	BOOST_TEST(b_data == copy_data, boost::test_tools::per_element());
+    b.playMove(0, 0, PlayerColour::BLACK);
+	auto copy_str = convertToString(copy);
+	BOOST_TEST(copy_str == testBoard);
 }
 
 // clang-format off

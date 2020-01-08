@@ -331,23 +331,13 @@ public:
 	 *
 	 * @param s Source
 	 */
-	Board(const Board &s)
-	    : m_Size(s.m_Size)
-	    , m_State(s.m_State)
-	    , m_Groups(s.m_Groups)
-	    , m_GroupRelation(s.m_GroupRelation) {
-	}
+	Board(const Board &s) = default;
 	/**
 	 * Move ctor
 	 *
 	 * @param s Source
 	 */
-	Board(Board &&s) noexcept
-	    : m_Size(s.m_Size)
-	    , m_State(std::move(s.m_State))
-	    , m_Groups(std::move(s.m_Groups))
-	    , m_GroupRelation(std::move(s.m_GroupRelation)) {
-	}
+	Board(Board &&s) noexcept = default;
 
 	/**
 	 * Default dtor
@@ -360,26 +350,14 @@ public:
 	 * @param s Source
 	 * @return Self
 	 */
-	Board &operator=(const Board &s) {
-		m_Size = s.m_Size;
-		m_State = s.m_State;
-		m_Groups = s.m_Groups;
-		m_GroupRelation = s.m_GroupRelation;
-		return *this;
-	}
+	Board &operator=(const Board &s) = default;
 	/**
 	 * Move assignment
 	 *
 	 * @param s Source
 	 * @return Self
 	 */
-	Board &operator=(Board &&s) noexcept {
-		m_Size = s.m_Size;
-		m_State = std::move(s.m_State);
-		m_Groups = std::move(s.m_Groups);
-		m_GroupRelation = std::move(s.m_GroupRelation);
-		return *this;
-	}
+	Board &operator=(Board &&s) noexcept = default;
 
 	/**
 	 * Size
