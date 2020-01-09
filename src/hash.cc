@@ -28,9 +28,8 @@
  */
 HashValues::HashValues() {
 	std::random_device rd;
-	auto time = std::chrono::duration_cast<std::chrono::nanoseconds>(
-	    std::chrono::high_resolution_clock::now().time_since_epoch())
-	                .count();
+	auto time =
+	    std::chrono::high_resolution_clock::now().time_since_epoch().count();
 	auto newSeed = rd() + time;
 	seed(newSeed);
 }
