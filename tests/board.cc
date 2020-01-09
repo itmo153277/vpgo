@@ -93,6 +93,20 @@ ostream &operator<<(ostream &os, const vector<move_description> &v) {
 	return os;
 }
 
+/**
+ * Print count
+ *
+ * @param os Stream
+ * @param v Value
+ * @return Stream
+ */
+ostream &operator<<(ostream &os, std::pair<std::size_t, std::size_t> v) {
+	auto [black, white] = v;
+	os << "b = " << black << ", ";
+	os << "w = " << white;
+	return os;
+}
+
 }  // namespace std
 
 /**
@@ -562,6 +576,61 @@ BOOST_DATA_TEST_CASE(board_suicide_tests, board_suicide_test_data, size,
 	Board b = convertFromString(size, position);
 	auto [x, y, colour] = move;
 	bool result = b.isSuicide(x, y, colour);
+	BOOST_CHECK(result == answer);
+}
+
+// clang-format off
+/**
+ * Data for board counting test
+ */
+const std::tuple<
+    std::size_t,  // Board size
+    std::string,  // Board state
+    std::pair<std::size_t, std::size_t>  // Answer
+> board_count_test_data[] = {
+    // Empty board
+    {1, " ", {0, 0}},
+    // Whole board
+    {
+        3,
+        "   "
+        " B "
+        "   ",
+        {9, 0}
+    },
+    {
+        3,
+        "   "
+        " BW"
+        "   ",
+        {1, 1}
+    },
+    // Complex position
+    {
+        5,
+        " B W "
+        " B WW"
+        "BB W "
+        " B WW"
+        "     ",
+        {7, 8}
+    },
+    {
+        5,
+        "B    "
+        " WWW "
+        " W W "
+        " WWW "
+        " W W ",
+        {1, 12}
+    }
+};
+// clang-format on
+
+BOOST_DATA_TEST_CASE(
+    board_count_tests, board_count_test_data, size, position, answer) {
+	Board b = convertFromString(size, position);
+	auto result = b.countPoints();
 	BOOST_CHECK(result == answer);
 }
 

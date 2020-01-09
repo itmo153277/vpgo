@@ -25,6 +25,7 @@
 #include <cstddef>
 #include <unordered_set>
 #include <unordered_map>
+#include <queue>
 
 /**
  * Merge two groups into one
@@ -117,7 +118,7 @@ void Board::removeGroup(std::size_t offset, std::size_t x, std::size_t y) {
  * @param colour Stone colour
  * @return True if suicide
  */
-bool Board::isSuicide(std::size_t x, std::size_t y, PlayerColour colour) {
+bool Board::isSuicide(std::size_t x, std::size_t y, PlayerColour colour) const {
 	std::unordered_map<std::size_t, std::size_t> sameNeightbours;
 	std::unordered_map<std::size_t, std::size_t> oppositeNeightbours;
 	for (auto [tx, ty, toffset] :
@@ -146,4 +147,63 @@ bool Board::isSuicide(std::size_t x, std::size_t y, PlayerColour colour) {
 		}
 	}
 	return true;
+}
+
+/**
+ * Count points
+ *
+ * @return Pair {Black, White}
+ */
+std::pair<std::size_t, std::size_t> Board::countPoints() const {
+	std::vector<bool> visited(m_State.size());
+	std::vector<bool> traversed(m_State.size());
+	std::size_t black = 0;
+	std::size_t white = 0;
+	for (std::size_t y = 0, offset = 0; y < m_Size; ++y) {
+		for (std::size_t x = 0; x < m_Size; ++x, ++offset) {
+			if (visited[offset]) {
+				continue;
+			}
+			visited[offset] = true;
+			if (m_State[offset] == PlayerColour::BLACK) {
+				++black;
+			} else if (m_State[offset] == PlayerColour::WHITE) {
+				++white;
+			} else {
+				PlayerColour colour = PlayerColour::NONE;
+				std::size_t count = 0;
+				std::queue<std::tuple<std::size_t, std::size_t, std::size_t>>
+				    queue;
+				queue.push({x, y, offset});
+				while (queue.size() > 0) {
+					auto [qx, qy, qoffset] = queue.front();
+					queue.pop();
+					if (traversed[qoffset]) {
+						continue;
+					}
+					if (m_State[qoffset] == PlayerColour::NONE) {
+						++count;
+						for (auto [tx, ty, toffset] :
+						    BoardTraverse(qx, qy, qoffset, m_Size)) {
+							queue.push({tx, ty, toffset});
+						}
+						visited[qoffset] = true;
+						traversed[qoffset] = true;
+						continue;
+					}
+					if (colour == PlayerColour::NONE) {
+						colour = m_State[qoffset];
+					} else if (colour != m_State[qoffset]) {
+						colour = PlayerColour::NEUTRAL;
+					}
+				}
+				if (colour == PlayerColour::BLACK) {
+					black += count;
+				} else if (colour == PlayerColour::WHITE) {
+					white += count;
+				}
+			}
+		}
+	}
+	return {black, white};
 }

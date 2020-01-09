@@ -451,7 +451,14 @@ public:
 	 * @param colour Stone colour
 	 * @return True if suicide
 	 */
-	bool isSuicide(std::size_t x, std::size_t y, PlayerColour colour);
+	bool isSuicide(std::size_t x, std::size_t y, PlayerColour colour) const;
+
+	/**
+	 * Count points
+	 *
+	 * @return Pair {Black, White}
+	 */
+	std::pair<std::size_t, std::size_t> countPoints() const;
 
 	/**
 	 * Get hash
