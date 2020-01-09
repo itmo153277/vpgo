@@ -42,9 +42,9 @@ HashValues::HashValues() {
  */
 void HashValues::seed(int newSeed) {
 	m_RandomEngine.seed(newSeed);
-	m_InitialValue = m_RandomEngine();
+	m_InitialValue = generateRandomNumber();
 	for (auto &v : m_Values) {
-		v = m_RandomEngine();
+		v = generateRandomNumber();
 	}
 }
 
@@ -55,7 +55,7 @@ void HashValues::seed(int newSeed) {
  */
 void HashValues::init(std::size_t size) {
 	for (; m_Size < size; ++m_Size) {
-		m_Values.push_back(m_RandomEngine());
-		m_Values.push_back(m_RandomEngine());
+		m_Values.push_back(generateRandomNumber());
+		m_Values.push_back(generateRandomNumber());
 	}
 }

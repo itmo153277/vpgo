@@ -259,7 +259,7 @@ private:
 	/**
 	 * Hash
 	 */
-	std::uint64_t m_Hash;
+	std::uint_least64_t m_Hash;
 
 	/**
 	 * Convert coords to offset
@@ -458,7 +458,7 @@ public:
 	 *
 	 * @return Hash
 	 */
-	std::uint64_t getHash() const {
+	std::uint_least64_t getHash() const {
 		return m_Hash;
 	}
 };

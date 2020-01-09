@@ -53,7 +53,7 @@ struct HashValues {
 	void init(std::size_t size);
 	/**
 	 * Reseed
-	 * 
+	 *
 	 * @param newSeed New seed
 	 */
 	void seed(int newSeed);
@@ -65,7 +65,8 @@ struct HashValues {
 	 * @param colour Player colour
 	 * @return Hash value
 	 */
-	std::uint16_t getValue(std::size_t offset, PlayerColour colour) const {
+	std::uint_least64_t getValue(
+	    std::size_t offset, PlayerColour colour) const {
 		assert(offset < m_Size);
 		switch (colour) {
 		case PlayerColour::BLACK:
@@ -81,7 +82,7 @@ struct HashValues {
 	 *
 	 * @return Initial hash value
 	 */
-	std::uint16_t getInitialValue() const {
+	std::uint_least64_t getInitialValue() const {
 		return m_InitialValue;
 	}
 
@@ -89,11 +90,11 @@ private:
 	/**
 	 * Move hash values
 	 */
-	std::vector<std::uint64_t> m_Values;
+	std::vector<std::uint_least64_t> m_Values;
 	/**
 	 * Initial hash value
 	 */
-	std::uint64_t m_InitialValue;
+	std::uint_least64_t m_InitialValue;
 	/**
 	 * Current size
 	 */
@@ -102,6 +103,21 @@ private:
 	 * Random engine
 	 */
 	std::default_random_engine m_RandomEngine;
+	/**
+	 * Distribution
+	 */
+	std::uniform_int_distribution<std::uint_least64_t> m_Distribution{
+	    0, UINT64_MAX};
+
+	/**
+	 * Generate random 64-bit number
+	 *
+	 * @return Random number
+	 */
+	std::uint_least64_t generateRandomNumber() {
+		return m_Distribution(m_RandomEngine);
+	}
+
 	/**
 	 * Private ctor
 	 */
