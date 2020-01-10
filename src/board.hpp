@@ -442,6 +442,16 @@ public:
 	 * @param colour Stone colour
 	 */
 	void playMove(std::size_t x, std::size_t y, PlayerColour colour);
+	/**
+	 * Play a move
+	 *
+	 * @param offset Offset
+	 * @param colour Stone colour
+	 */
+	void playMove(std::size_t offset, PlayerColour colour) {
+		auto [x, y] = offsetToCoords(offset);
+		playMove(x, y, colour);
+	}
 
 	/**
 	 * Check if move is a suicide
@@ -452,6 +462,17 @@ public:
 	 * @return True if suicide
 	 */
 	bool isSuicide(std::size_t x, std::size_t y, PlayerColour colour) const;
+	/**
+	 * Check if move is a suicide
+	 *
+	 * @param offset Offset
+	 * @param colour Stone colour
+	 * @return True if suicide
+	 */
+	bool isSuicide(std::size_t offset, PlayerColour colour) const {
+		auto [x, y] = offsetToCoords(offset);
+		return isSuicide(x, y, colour);
+	}
 
 	/**
 	 * Count points

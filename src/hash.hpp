@@ -106,8 +106,9 @@ private:
 	/**
 	 * Distribution
 	 */
-	std::uniform_int_distribution<std::uint_least64_t> m_Distribution{
-	    0, UINT64_MAX};
+	std::uniform_int_distribution<unsigned long long  // NOLINT(runtime/int)
+	    >
+	    m_Distribution{0, UINT64_MAX};
 
 	/**
 	 * Generate random 64-bit number
