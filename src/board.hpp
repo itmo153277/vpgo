@@ -475,6 +475,29 @@ public:
 	}
 
 	/**
+	 * Pre-computes hash
+	 *
+	 * @param x X coord
+	 * @param y Y coord
+	 * @param colour Stone colour
+	 * @return Hash value
+	 */
+	std::uint_least64_t preComputeHash(
+	    std::size_t x, std::size_t y, PlayerColour colour) const;
+	/**
+	 * Pre-computes hash
+	 *
+	 * @param offset Offset
+	 * @param colour Stone colour
+	 * @return Hash value
+	 */
+	std::uint_least64_t preComputeHash(
+	    std::size_t offset, PlayerColour colour) const {
+		auto [x, y] = offsetToCoords(offset);
+		return preComputeHash(x, y, colour);
+	}
+
+	/**
 	 * Count points
 	 *
 	 * @return Pair {Black, White}

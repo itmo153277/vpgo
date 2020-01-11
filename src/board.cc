@@ -119,6 +119,8 @@ void Board::removeGroup(std::size_t offset, std::size_t x, std::size_t y) {
  * @return True if suicide
  */
 bool Board::isSuicide(std::size_t x, std::size_t y, PlayerColour colour) const {
+	assert(x < m_Size);
+	assert(y < m_Size);
 	std::unordered_map<std::size_t, std::size_t> sameNeightbours;
 	std::unordered_map<std::size_t, std::size_t> oppositeNeightbours;
 	for (auto [tx, ty, toffset] :
@@ -206,4 +208,55 @@ std::pair<std::size_t, std::size_t> Board::countPoints() const {
 		}
 	}
 	return {black, white};
+}
+
+/**
+ * Pre-computes hash
+ *
+ * @param x X coord
+ * @param y Y coord
+ * @param colour Stone colour
+ * @return Hash value
+ */
+std::uint_least64_t Board::preComputeHash(
+    std::size_t x, std::size_t y, PlayerColour colour) const {
+	assert(x < m_Size);
+	assert(y < m_Size);
+	std::size_t offset = coordsToOffset(x, y);
+	std::uint_least64_t currentHash =
+	    m_Hash ^ HashValues::getInstance()->getValue(offset, colour);
+	std::unordered_map<std::size_t, std::size_t> neightbours;
+	std::queue<std::tuple<std::size_t, std::size_t, std::size_t>>
+	    stonesToRemove;
+	std::unordered_set<std::size_t> removedStones;
+	for (auto [tx, ty, toffset] :
+	    BoardTraverse(x, y, coordsToOffset(x, y), m_Size)) {
+		if (m_State[toffset] != colour.invert()) {
+			continue;
+		}
+		const std::size_t group = getGroupLocation(toffset);
+		auto neightbour =
+		    neightbours.insert({group, m_Groups[group].edges}).first;
+		--neightbour->second;
+		if (neightbour->second == 0) {
+			stonesToRemove.push({tx, ty, toffset});
+		}
+	}
+	while (stonesToRemove.size() > 0) {
+		auto [qx, qy, qoffset] = stonesToRemove.front();
+		stonesToRemove.pop();
+		bool skip = !removedStones.insert(qoffset).second;
+		if (skip) {
+			continue;
+		}
+		currentHash ^=
+		    HashValues::getInstance()->getValue(qoffset, colour.invert());
+		for (auto [tx, ty, toffset] : BoardTraverse(qx, qy, qoffset, m_Size)) {
+			if (m_State[toffset] != colour.invert()) {
+				continue;
+			}
+			stonesToRemove.push({tx, ty, toffset});
+		}
+	}
+	return currentHash;
 }

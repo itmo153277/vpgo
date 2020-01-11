@@ -59,6 +59,10 @@ struct Game {
 		if (b.isSuicide(offset, col)) {
 			return true;
 		}
+		auto newHash = b.preComputeHash(offset, col);
+		if (hashes.find(newHash) != hashes.end()) {
+			return true;
+		}
 		return false;
 	}
 	void playMove(std::size_t offset, PlayerColour col) {

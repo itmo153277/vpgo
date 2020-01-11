@@ -340,6 +340,18 @@ BOOST_AUTO_TEST_CASE(board_hash_check) {
 	BOOST_TEST(b.getHash() != copy.getHash());
 }
 
+BOOST_AUTO_TEST_CASE(board_precompute_hash_check) {
+	HashValues::getInstance()->seed(0xEAEAEAEA);
+	const char testPreHashBoard[] =
+	    " WW"
+	    " BW"
+	    "BWW";
+	Board b = convertFromString(3, testPreHashBoard);
+	auto preHash = b.preComputeHash(0, 0, PlayerColour::BLACK);
+	b.playMove(0, 0, PlayerColour::BLACK);
+	BOOST_TEST(b.getHash() == preHash);
+}
+
 BOOST_AUTO_TEST_CASE(board_eq_check) {
 	HashValues::getInstance()->seed(0xEAEAEAEA);
 	bool result;
