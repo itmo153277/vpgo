@@ -116,6 +116,9 @@ std::string moveToString(std::size_t move) {
 	}
 	int x = move % BOARD_SIZE;
 	int y = move / BOARD_SIZE;
+	if (x >= 8) {
+		++x;
+	}
 	std::string ret = "A1";
 	ret[0] += x;
 	ret[1] += BOARD_SIZE - y - 1;
@@ -157,13 +160,18 @@ PlayerColour playout(Game *g, PlayerColour toMove) {
 	return g->winner;
 }
 
-void printHeatmap(Node *n) {
+void printStats(Node *n) {
 	std::vector<int> heatMap(RESIGN);
+	std::vector<int> effortMap(RESIGN);
 	for (auto &m : n->nodes) {
 		heatMap[m.move] =
 		    static_cast<int>(100 - 100.0 * m.wins / m.visits + 0.5);
+		effortMap[m.move] =
+		    static_cast<int>(100.0 * m.visits / n->visits + 0.5);
 	}
 	std::cout << "Win %: " << 1.0 * n->wins / n->visits << std::endl;
+	std::cout << "Playouts: " << n->visits << std::endl;
+	std::cout << "Heatmap:" << std::endl;
 	for (std::size_t y = 0; y < BOARD_SIZE; ++y) {
 		for (std::size_t x = 0; x < BOARD_SIZE; ++x) {
 			if (x != 0) {
@@ -174,6 +182,17 @@ void printHeatmap(Node *n) {
 		std::cout << std::endl;
 	}
 	std::cout << "PASS = " << std::setw(2) << heatMap[PASS] << std::endl;
+	std::cout << "Effort:" << std::endl;
+	for (std::size_t y = 0; y < BOARD_SIZE; ++y) {
+		for (std::size_t x = 0; x < BOARD_SIZE; ++x) {
+			if (x != 0) {
+				std::cout << ' ';
+			}
+			std::cout << std::setw(2) << effortMap[x + y * BOARD_SIZE];
+		}
+		std::cout << std::endl;
+	}
+	std::cout << "PASS = " << std::setw(2) << effortMap[PASS] << std::endl;
 }
 
 std::size_t bestMove(Node *n) {
@@ -244,7 +263,7 @@ std::size_t findMove(Game *g, PlayerColour col) {
 		Game clone = *g;
 		simulate(&clone, &root, col);
 	}
-	printHeatmap(&root);
+	printStats(&root);
 	return bestMove(&root);
 }
 
