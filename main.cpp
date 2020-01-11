@@ -30,12 +30,11 @@
 #include <random>
 #include <chrono>
 #include <vector>
-#include <memory>
 #include "src/vpgo.hpp"
 #include "src/hash.hpp"
 #include "src/board.hpp"
 
-const std::size_t BOARD_SIZE = 5;
+const std::size_t BOARD_SIZE = 9;
 const std::size_t NUM_SIM = 100000;
 const std::size_t PASS = BOARD_SIZE * BOARD_SIZE;
 const std::size_t RESIGN = PASS + 1;
@@ -47,6 +46,21 @@ struct Game {
 	std::unordered_set<std::uint_least64_t> hashes = {
 	    HashValues::getInstance()->getInitialValue()};
 
+	bool isIllegal(std::size_t offset, PlayerColour col) const {
+		if (offset == RESIGN) {
+			return false;
+		}
+		if (offset == PASS) {
+			return false;
+		}
+		if (b.getValue(offset) != PlayerColour::NONE) {
+			return true;
+		}
+		if (b.isSuicide(offset, col)) {
+			return true;
+		}
+		return false;
+	}
 	void playMove(std::size_t offset, PlayerColour col) {
 		if (offset == RESIGN) {
 			winner = col.invert();
@@ -115,96 +129,104 @@ std::string playerToString(PlayerColour col) {
 }
 
 struct Node {
-	std::vector<std::unique_ptr<Node>> moves{RESIGN};
+	std::vector<Node> nodes;
 	std::size_t visits = 0;
 	std::size_t wins = 0;
+	std::size_t move;
+
+	Node() = default;
+	explicit Node(std::size_t m) {
+		move = m;
+	}
 };
 
 PlayerColour playout(Game *g, PlayerColour toMove) {
 	PlayerColour col = toMove;
 	while (g->winner == PlayerColour::NONE) {
 		auto move = randomMove();
+		if (g->isIllegal(move, col)) {
+			continue;
+		}
 		g->playMove(move, col);
 		col = col.invert();
 	}
 	return g->winner;
 }
 
-std::size_t bestMove(Node *n) {
+void printHeatmap(Node *n) {
+	std::vector<int> heatMap(RESIGN);
+	for (auto &m : n->nodes) {
+		heatMap[m.move] =
+		    static_cast<int>(100 - 100.0 * m.wins / m.visits + 0.5);
+	}
 	std::cout << "Win %: " << 1.0 * n->wins / n->visits << std::endl;
 	for (std::size_t y = 0; y < BOARD_SIZE; ++y) {
 		for (std::size_t x = 0; x < BOARD_SIZE; ++x) {
-			Node *m = n->moves[x + y * BOARD_SIZE].get();
-			std::cout << std::setw(2)
-			          << static_cast<int>(
-			                 100 - 100.0 * m->wins / m->visits + 0.5)
-			          << ' ';
+			if (x != 0) {
+				std::cout << ' ';
+			}
+			std::cout << std::setw(2) << heatMap[x + y * BOARD_SIZE];
 		}
 		std::cout << std::endl;
 	}
-	Node *m = n->moves[PASS].get();
-	std::cout << "PASS = " << std::setw(2)
-	          << static_cast<int>(100 - 100.0 * m->wins / m->visits + 0.5)
-	          << std::endl;
+	std::cout << "PASS = " << std::setw(2) << heatMap[PASS] << std::endl;
+}
+
+std::size_t bestMove(Node *n) {
 	if (1.0 * n->wins / n->visits < 0.1) {
 		return RESIGN;
 	}
 	std::size_t maxVis = 0;
-	std::size_t move = 0;
-	std::size_t curMove = 0;
-	for (auto &m : n->moves) {
-		if (m->visits > maxVis) {
-			move = curMove;
-			maxVis = m->visits;
+	std::size_t move = RESIGN;
+	for (auto &m : n->nodes) {
+		if (m.visits > maxVis) {
+			move = m.move;
+			maxVis = m.visits;
 		}
-		++curMove;
 	}
 	return move;
 }
 
-std::pair<Node *, std::size_t> selectMove(Node *n) {
-	std::size_t move = 0;
+Node *selectMove(Node *n) {
 	Node *child = nullptr;
-	if (n->visits <= RESIGN) {
-		std::uniform_int_distribution<unsigned int> d(0, RESIGN - n->visits);
-		auto num = d(gen);
-		move = num;
-		for (auto &m : n->moves) {
-			if (m) {
-				++move;
-				continue;
-			}
-			if (num == 0) {
-				m = std::make_unique<Node>();
-				child = m.get();
-				break;
-			}
-			num--;
+	double bestVal = 0;
+	for (auto &m : n->nodes) {
+		double curVal;
+		if (m.visits == 0) {
+			curVal = 100 + gen();
+		} else {
+			curVal = 1.0 - 1.0 * m.wins / m.visits +
+			         std::sqrt(std::log(n->visits) / m.visits / 2);
 		}
-	} else {
-		double bestVal = 0;
-		std::size_t curMove = 0;
-		for (auto &m : n->moves) {
-			double val = 1.0 - 1.0 * m->wins / m->visits +
-			             3.0 * std::sqrt(std::log(n->visits) / m->visits / 2);
-			if (val > bestVal) {
-				bestVal = val;
-				move = curMove;
-				child = m.get();
-			}
-			++curMove;
+		if (curVal > bestVal) {
+			child = &m;
+			bestVal = curVal;
 		}
 	}
-	return {child, move};
+	return child;
+}
+
+void expandTree(Node *n, Game *g, PlayerColour col) {
+	for (std::size_t move = 0; move < RESIGN; ++move) {
+		if (g->isIllegal(move, col)) {
+			continue;
+		}
+		n->nodes.emplace_back(move);
+	}
 }
 
 void simulate(Game *g, Node *n, PlayerColour col) {
-	if (n->visits == 0) {
-		playout(g, col);
-	} else if (g->winner == PlayerColour::NONE) {
-		auto [child, move] = selectMove(n);
-		g->playMove(move, col);
-		simulate(g, child, col.invert());
+	if (g->winner == PlayerColour::NONE) {
+		if (n->visits == 0) {
+			playout(g, col);
+		} else {
+			if (n->visits == 1) {
+				expandTree(n, g, col);
+			}
+			auto child = selectMove(n);
+			g->playMove(child->move, col);
+			simulate(g, child, col.invert());
+		}
 	}
 	n->visits++;
 	if (g->winner == col) {
@@ -218,6 +240,7 @@ std::size_t findMove(Game *g, PlayerColour col) {
 		Game clone = *g;
 		simulate(&clone, &root, col);
 	}
+	printHeatmap(&root);
 	return bestMove(&root);
 }
 
@@ -233,7 +256,7 @@ void printBoard(Board *b) {
 				std::cout << " W ";
 				break;
 			default:
-				std::cout << "   ";
+				std::cout << " - ";
 			}
 		}
 		std::cout << std::endl;
