@@ -277,21 +277,21 @@ void printStats(Node *n) {
 		if (!curMove->expanded) {
 			break;
 		}
-		std::size_t move = bestMove(curMove);
-		std::cout << moveToString(move) << ' ';
-		if (move == RESIGN) {
-			break;
-		}
+		Node *next = nullptr;
+		std::size_t maxVisits = 0;
 		for (auto &m : curMove->nodes) {
-			if (m->move == move) {
-				curMove = m.get();
-				break;
+			if (m->visits < maxVisits) {
+				next = m.get();
+				maxVisits = m->visits;
 			}
 		}
-		std::cout << '(' << std::setw(0) << curMove->visits << ") ";
-		if (curMove->visits < 100) {
+		if (next == nullptr || next->visits < 100) {
 			break;
 		}
+		std::size_t move = next->move;
+		curMove = next;
+		std::cout << moveToString(move) << ' ';
+		std::cout << '(' << std::setw(0) << curMove->visits << ") ";
 	}
 	std::cout << std::endl;
 }
