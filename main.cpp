@@ -30,6 +30,9 @@
 #include <random>
 #include <chrono>
 #include <vector>
+#include <thread>
+#include <atomic>
+#include <memory>
 #include "src/vpgo.hpp"
 #include "src/hash.hpp"
 #include "src/board.hpp"
@@ -131,10 +134,31 @@ std::string playerToString(PlayerColour col) {
 	return "?";
 }
 
+void printBoard(Board *b) {
+	for (std::size_t y = 0; y < BOARD_SIZE; ++y) {
+		for (std::size_t x = 0; x < BOARD_SIZE; ++x) {
+			PlayerColour v = b->getValue(x, y);
+			switch (v) {
+			case PlayerColour::BLACK:
+				std::cout << " B ";
+				break;
+			case PlayerColour::WHITE:
+				std::cout << " W ";
+				break;
+			default:
+				std::cout << " - ";
+			}
+		}
+		std::cout << std::endl;
+	}
+}
+
 struct Node {
-	std::vector<Node> nodes;
-	std::size_t visits = 0;
-	std::size_t wins = 0;
+	std::vector<std::unique_ptr<Node>> nodes;
+	std::atomic<std::size_t> visits = 0;
+	std::atomic<std::size_t> wins = 0;
+	std::atomic<bool> expanding = false;
+	std::atomic<bool> expanded = false;
 	std::size_t move;
 
 	Node() = default;
@@ -143,14 +167,16 @@ struct Node {
 	}
 };
 
-std::default_random_engine gen;
-std::vector<int> moves(RESIGN);
-std::uniform_int_distribution<unsigned int> distrDefault(0, PASS);
+struct ThreadData {
+	std::default_random_engine gen;
+	std::vector<std::size_t> moves = std::vector<std::size_t>(RESIGN);
+	std::uniform_int_distribution<unsigned int> distrDefault{0, PASS};
+};
 
-PlayerColour playout(Game *g, PlayerColour toMove) {
+PlayerColour playout(Game *g, PlayerColour toMove, ThreadData *td) {
 	PlayerColour col = toMove;
 	while (g->winner == PlayerColour::NONE) {
-		std::size_t move = distrDefault(gen);
+		std::size_t move = td->distrDefault(td->gen);
 		if (g->isIllegal(move, col) ||
 		    (move == PASS && g->countPoints() != col)) {
 			std::size_t possibleMoves = 0;
@@ -160,7 +186,7 @@ PlayerColour playout(Game *g, PlayerColour toMove) {
 				    (move == PASS && i == PASS)) {
 					continue;
 				}
-				moves[possibleMoves] = i;
+				td->moves[possibleMoves] = i;
 				++possibleMoves;
 			}
 			if (possibleMoves == 0) {
@@ -171,11 +197,11 @@ PlayerColour playout(Game *g, PlayerColour toMove) {
 					if (possibleMoves > 1) {
 						std::uniform_int_distribution<unsigned int> distr(
 						    0, possibleMoves - 1);
-						moveIndex = distr(gen);
+						moveIndex = distr(td->gen);
 					} else {
 						moveIndex = 0;
 					}
-					move = moves[moveIndex];
+					move = td->moves[moveIndex];
 					if (g->isIllegal(move, col) ||
 					    (move == PASS && g->countPoints() != col)) {
 						--possibleMoves;
@@ -183,7 +209,7 @@ PlayerColour playout(Game *g, PlayerColour toMove) {
 							move = RESIGN;
 							break;
 						}
-						moves[moveIndex] = moves[possibleMoves];
+						td->moves[moveIndex] = td->moves[possibleMoves];
 						continue;
 					}
 					break;
@@ -200,10 +226,10 @@ void printStats(Node *n) {
 	std::vector<int> heatMap(RESIGN);
 	std::vector<int> effortMap(RESIGN);
 	for (auto &m : n->nodes) {
-		heatMap[m.move] =
-		    static_cast<int>(100 - 100.0 * m.wins / m.visits + 0.5);
-		effortMap[m.move] =
-		    static_cast<int>(100.0 * m.visits / n->visits + 0.5);
+		heatMap[m->move] =
+		    static_cast<int>(100 - 100.0 * m->wins / m->visits + 0.5);
+		effortMap[m->move] =
+		    static_cast<int>(100.0 * m->visits / n->visits + 0.5);
 	}
 	std::cout << "Win %: " << 1.0 * n->wins / n->visits << std::endl;
 	std::cout << "Playouts: " << n->visits << std::endl;
@@ -238,27 +264,28 @@ std::size_t bestMove(Node *n) {
 	std::size_t maxVis = 0;
 	std::size_t move = RESIGN;
 	for (auto &m : n->nodes) {
-		if (m.visits > maxVis) {
-			move = m.move;
-			maxVis = m.visits;
+		if (m->visits > maxVis) {
+			move = m->move;
+			maxVis = m->visits;
 		}
 	}
 	return move;
 }
 
-Node *selectMove(Node *n) {
+Node *selectMove(Node *n, ThreadData *td) {
 	Node *child = nullptr;
 	double bestVal = 0;
 	for (auto &m : n->nodes) {
 		double curVal;
-		if (m.visits == 0) {
-			curVal = 100 + gen();
+		if (m->visits == 0) {
+			curVal = 100 + td->gen();
 		} else {
-			curVal = 1.0 - 1.0 * m.wins / m.visits +
-			         std::sqrt(std::log(n->visits) / m.visits / 2);
+			curVal = 1.0 - 1.0 * m->wins / m->visits +
+			         std::sqrt(std::log(static_cast<double>(n->visits)) /
+			                   m->visits / 2);
 		}
 		if (curVal > bestVal) {
-			child = &m;
+			child = m.get();
 			bestVal = curVal;
 		}
 	}
@@ -270,21 +297,22 @@ void expandTree(Node *n, Game *g, PlayerColour col) {
 		if (g->isIllegal(move, col)) {
 			continue;
 		}
-		n->nodes.emplace_back(move);
+		n->nodes.push_back(std::make_unique<Node>(move));
 	}
+	n->expanded = true;
 }
 
-void simulate(Game *g, Node *n, PlayerColour col) {
+void simulate(Game *g, Node *n, PlayerColour col, ThreadData *td) {
 	if (g->winner == PlayerColour::NONE) {
-		if (n->visits == 0) {
-			playout(g, col);
-		} else {
-			if (n->visits == 1) {
+		if (!n->expanded) {
+			if (!n->expanding.exchange(true)) {
 				expandTree(n, g, col);
 			}
-			auto child = selectMove(n);
+			playout(g, col, td);
+		} else {
+			auto child = selectMove(n, td);
 			g->playMove(child->move, col);
-			simulate(g, child, col.invert());
+			simulate(g, child, col.invert(), td);
 		}
 	}
 	n->visits++;
@@ -293,33 +321,32 @@ void simulate(Game *g, Node *n, PlayerColour col) {
 	}
 }
 
-std::size_t findMove(Game *g, PlayerColour col) {
+std::size_t findMove(Game *g, PlayerColour col, int seed) {
 	Node root;
-	for (std::size_t i = 0; i < NUM_SIM; ++i) {
-		Game clone = *g;
-		simulate(&clone, &root, col);
+	std::atomic<std::size_t> playouts = 0;
+	std::seed_seq seq{seed};
+	std::vector<std::thread> threads;
+	std::size_t cpuCount = std::thread::hardware_concurrency();
+	if (cpuCount == 0) {
+		cpuCount = 1;
+	}
+	std::vector<int> seeds(cpuCount);
+	seq.generate(seeds.begin(), seeds.end());
+	for (std::size_t i = 0; i < cpuCount; ++i) {
+		threads.emplace_back([&](int seed) {
+			ThreadData td;
+			td.gen.seed(seed);
+			while (++playouts <= NUM_SIM) {
+				Game clone = *g;
+				simulate(&clone, &root, col, &td);
+			}
+		}, seeds[i]);
+	}
+	for (auto &t : threads) {
+		t.join();
 	}
 	printStats(&root);
 	return bestMove(&root);
-}
-
-void printBoard(Board *b) {
-	for (std::size_t y = 0; y < BOARD_SIZE; ++y) {
-		for (std::size_t x = 0; x < BOARD_SIZE; ++x) {
-			PlayerColour v = b->getValue(x, y);
-			switch (v) {
-			case PlayerColour::BLACK:
-				std::cout << " B ";
-				break;
-			case PlayerColour::WHITE:
-				std::cout << " W ";
-				break;
-			default:
-				std::cout << " - ";
-			}
-		}
-		std::cout << std::endl;
-	}
 }
 
 /**
@@ -331,6 +358,7 @@ void printBoard(Board *b) {
  */
 int main(int argc, char **argv) {
 	std::random_device rd;
+	std::default_random_engine gen;
 	gen.seed(
 	    std::chrono::high_resolution_clock::now().time_since_epoch().count() +
 	    rd());
@@ -338,7 +366,7 @@ int main(int argc, char **argv) {
 	Game g;
 	PlayerColour col = PlayerColour::BLACK;
 	while (g.winner == PlayerColour::NONE) {
-		auto move = findMove(&g, col);
+		auto move = findMove(&g, col, gen());
 		std::cout << playerToString(col) << ' ' << moveToString(move)
 		          << std::endl;
 		g.playMove(move, col);
