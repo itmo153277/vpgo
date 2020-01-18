@@ -159,6 +159,7 @@ struct Node {
 	std::atomic<std::size_t> wins = 0;
 	std::atomic<bool> expanding = false;
 	std::atomic<bool> expanded = false;
+	std::atomic<bool> explored = false;
 	std::size_t move;
 
 	Node() = default;
@@ -222,41 +223,6 @@ PlayerColour playout(Game *g, PlayerColour toMove, ThreadData *td) {
 	return g->winner;
 }
 
-void printStats(Node *n) {
-	std::vector<int> heatMap(RESIGN);
-	std::vector<int> effortMap(RESIGN);
-	for (auto &m : n->nodes) {
-		heatMap[m->move] =
-		    static_cast<int>(100 - 100.0 * m->wins / m->visits + 0.5);
-		effortMap[m->move] =
-		    static_cast<int>(100.0 * m->visits / n->visits + 0.5);
-	}
-	std::cout << "Win %: " << 1.0 * n->wins / n->visits << std::endl;
-	std::cout << "Playouts: " << n->visits << std::endl;
-	std::cout << "Heatmap:" << std::endl;
-	for (std::size_t y = 0; y < BOARD_SIZE; ++y) {
-		for (std::size_t x = 0; x < BOARD_SIZE; ++x) {
-			if (x != 0) {
-				std::cout << ' ';
-			}
-			std::cout << std::setw(2) << heatMap[x + y * BOARD_SIZE];
-		}
-		std::cout << std::endl;
-	}
-	std::cout << "PASS = " << std::setw(2) << heatMap[PASS] << std::endl;
-	std::cout << "Effort:" << std::endl;
-	for (std::size_t y = 0; y < BOARD_SIZE; ++y) {
-		for (std::size_t x = 0; x < BOARD_SIZE; ++x) {
-			if (x != 0) {
-				std::cout << ' ';
-			}
-			std::cout << std::setw(2) << effortMap[x + y * BOARD_SIZE];
-		}
-		std::cout << std::endl;
-	}
-	std::cout << "PASS = " << std::setw(2) << effortMap[PASS] << std::endl;
-}
-
 std::size_t bestMove(Node *n) {
 	if (1.0 * n->wins / n->visits < 0.1) {
 		return RESIGN;
@@ -270,6 +236,64 @@ std::size_t bestMove(Node *n) {
 		}
 	}
 	return move;
+}
+
+void printStats(Node *n) {
+	std::vector<int> winP(RESIGN);
+	std::vector<int> effortMap(RESIGN);
+	for (auto &m : n->nodes) {
+		winP[m->move] =
+		    static_cast<int>(100 - 100.0 * m->wins / m->visits + 0.5);
+		effortMap[m->move] =
+		    static_cast<int>(100.0 * m->visits / n->visits + 0.5);
+	}
+	std::cout << "Win %: " << 1.0 * n->wins / n->visits << std::endl;
+	std::cout << "Playouts: " << n->visits << std::endl;
+	std::cout << "Win % map:" << std::endl;
+	for (std::size_t y = 0; y < BOARD_SIZE; ++y) {
+		for (std::size_t x = 0; x < BOARD_SIZE; ++x) {
+			if (x != 0) {
+				std::cout << ' ';
+			}
+			std::cout << std::setw(2) << winP[x + y * BOARD_SIZE];
+		}
+		std::cout << std::endl;
+	}
+	std::cout << "PASS = " << std::setw(2) << winP[PASS] << std::endl;
+	std::cout << "Effort:" << std::endl;
+	for (std::size_t y = 0; y < BOARD_SIZE; ++y) {
+		for (std::size_t x = 0; x < BOARD_SIZE; ++x) {
+			if (x != 0) {
+				std::cout << ' ';
+			}
+			std::cout << std::setw(2) << effortMap[x + y * BOARD_SIZE];
+		}
+		std::cout << std::endl;
+	}
+	std::cout << "PASS = " << std::setw(2) << effortMap[PASS] << std::endl;
+	std::cout << "Best line: ";
+	Node *curMove = n;
+	for (std::size_t i = 0; i < 5; ++i) {
+		if (!curMove->expanded) {
+			break;
+		}
+		std::size_t move = bestMove(curMove);
+		std::cout << moveToString(move) << ' ';
+		if (move == RESIGN) {
+			break;
+		}
+		for (auto &m : curMove->nodes) {
+			if (m->move == move) {
+				curMove = m.get();
+				break;
+			}
+		}
+		std::cout << '(' << std::setw(0) << curMove->visits << ") ";
+		if (curMove->visits < 100) {
+			break;
+		}
+	}
+	std::cout << std::endl;
 }
 
 Node *selectMove(Node *n, ThreadData *td) {
@@ -304,15 +328,16 @@ void expandTree(Node *n, Game *g, PlayerColour col) {
 
 void simulate(Game *g, Node *n, PlayerColour col, ThreadData *td) {
 	if (g->winner == PlayerColour::NONE) {
-		if (!n->expanded) {
-			if (!n->expanding.exchange(true)) {
-				expandTree(n, g, col);
-			}
-			playout(g, col, td);
-		} else {
+		if (n->explored.exchange(true) && !n->expanded &&
+		    !n->expanding.exchange(true)) {
+			expandTree(n, g, col);
+		}
+		if (n->expanded) {
 			auto child = selectMove(n, td);
 			g->playMove(child->move, col);
 			simulate(g, child, col.invert(), td);
+		} else {
+			playout(g, col, td);
 		}
 	}
 	n->visits++;
@@ -333,14 +358,16 @@ std::size_t findMove(Game *g, PlayerColour col, int seed) {
 	std::vector<int> seeds(cpuCount);
 	seq.generate(seeds.begin(), seeds.end());
 	for (std::size_t i = 0; i < cpuCount; ++i) {
-		threads.emplace_back([&](int seed) {
-			ThreadData td;
-			td.gen.seed(seed);
-			while (++playouts <= NUM_SIM) {
-				Game clone = *g;
-				simulate(&clone, &root, col, &td);
-			}
-		}, seeds[i]);
+		threads.emplace_back(
+		    [&](int seed) {
+			    ThreadData td;
+			    td.gen.seed(seed);
+			    while (++playouts <= NUM_SIM) {
+				    Game clone = *g;
+				    simulate(&clone, &root, col, &td);
+			    }
+		    },
+		    seeds[i]);
 	}
 	for (auto &t : threads) {
 		t.join();
@@ -366,10 +393,18 @@ int main(int argc, char **argv) {
 	Game g;
 	PlayerColour col = PlayerColour::BLACK;
 	while (g.winner == PlayerColour::NONE) {
+		auto time = std::chrono::high_resolution_clock::now();
 		auto move = findMove(&g, col, gen());
 		std::cout << playerToString(col) << ' ' << moveToString(move)
 		          << std::endl;
 		g.playMove(move, col);
+		auto calcDuration = std::chrono::high_resolution_clock::now() - time;
+		std::cout << "Time elapsed: " << std::setw(0)
+		          << std::chrono::duration_cast<std::chrono::milliseconds>(
+		                 calcDuration)
+		                     .count() /
+		                 1000.0
+		          << 's' << std::endl;
 		printBoard(&g.b);
 		col = col.invert();
 	}
