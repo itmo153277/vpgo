@@ -72,12 +72,7 @@ struct Game {
 		}
 		if (offset == PASS) {
 			if (lastMoveWasPass) {
-				auto [black, white] = b.countPoints();
-				if (black > white) {
-					winner = PlayerColour::BLACK;
-				} else {
-					winner = PlayerColour::WHITE;
-				}
+				winner = countPoints();
 			} else {
 				lastMoveWasPass = true;
 			}
@@ -98,14 +93,15 @@ struct Game {
 			winner = col.invert();
 		}
 	}
+	PlayerColour countPoints() {
+		auto [black, white] = b.countPoints();
+		if (black > white) {
+			return PlayerColour::BLACK;
+		} else {
+			return PlayerColour::WHITE;
+		}
+	}
 };
-
-std::uniform_int_distribution<unsigned int> distr(0, PASS);
-std::default_random_engine gen;
-
-std::size_t randomMove() {
-	return distr(gen);
-}
 
 std::string moveToString(std::size_t move) {
 	if (move == PASS) {
@@ -147,12 +143,52 @@ struct Node {
 	}
 };
 
+std::default_random_engine gen;
+std::vector<int> moves(RESIGN);
+std::uniform_int_distribution<unsigned int> distrDefault(0, PASS);
+
 PlayerColour playout(Game *g, PlayerColour toMove) {
 	PlayerColour col = toMove;
 	while (g->winner == PlayerColour::NONE) {
-		auto move = randomMove();
-		if (g->isIllegal(move, col)) {
-			continue;
+		std::size_t move = distrDefault(gen);
+		if (g->isIllegal(move, col) ||
+		    (move == PASS && g->countPoints() != col)) {
+			std::size_t possibleMoves = 0;
+			for (std::size_t i = 0; i < RESIGN; ++i) {
+				if ((i < PASS && (g->b.getValue(i) != PlayerColour::NONE ||
+				                     g->b.isSuicide(i, col))) ||
+				    (move == PASS && i == PASS)) {
+					continue;
+				}
+				moves[possibleMoves] = i;
+				++possibleMoves;
+			}
+			if (possibleMoves == 0) {
+				move = RESIGN;
+			} else {
+				for (;;) {
+					std::size_t moveIndex;
+					if (possibleMoves > 1) {
+						std::uniform_int_distribution<unsigned int> distr(
+						    0, possibleMoves - 1);
+						moveIndex = distr(gen);
+					} else {
+						moveIndex = 0;
+					}
+					move = moves[moveIndex];
+					if (g->isIllegal(move, col) ||
+					    (move == PASS && g->countPoints() != col)) {
+						--possibleMoves;
+						if (possibleMoves == 0) {
+							move = RESIGN;
+							break;
+						}
+						moves[moveIndex] = moves[possibleMoves];
+						continue;
+					}
+					break;
+				}
+			}
 		}
 		g->playMove(move, col);
 		col = col.invert();
