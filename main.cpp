@@ -309,7 +309,7 @@ void printStats(Node *n) {
 }
 
 Node *selectMove(Node *n, ThreadData *td) {
-	Node *child = nullptr;
+	Node *child = n->nodes[0].get();
 	double bestVal = 0;
 	for (auto &m : n->nodes) {
 		double curVal;
