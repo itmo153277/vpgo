@@ -280,7 +280,7 @@ void printStats(Node *n) {
 		Node *next = nullptr;
 		std::size_t maxVisits = 0;
 		for (auto &m : curMove->nodes) {
-			if (m->visits < maxVisits) {
+			if (m->visits > maxVisits) {
 				next = m.get();
 				maxVisits = m->visits;
 			}
