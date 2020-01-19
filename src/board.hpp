@@ -260,6 +260,10 @@ private:
 	 * Hash
 	 */
 	std::uint_least64_t m_Hash;
+	/**
+	 * Number of stones
+	 */
+	std::size_t m_Stones;
 
 	/**
 	 * Convert coords to offset
@@ -331,7 +335,8 @@ public:
 	    , m_State(size * size, PlayerColour::NONE)
 	    , m_Groups(size * size)
 	    , m_GroupRelation(size * size)
-	    , m_Hash(HashValues::getInstance()->getInitialValue()) {
+	    , m_Hash(HashValues::getInstance()->getInitialValue())
+	    , m_Stones(0) {
 	}
 	/**
 	 * Copy ctor
@@ -511,6 +516,15 @@ public:
 	 */
 	std::uint_least64_t getHash() const {
 		return m_Hash;
+	}
+
+	/**
+	 * Get the number of stones
+	 * 
+	 * @return Number of stones
+	 */
+	std::size_t getNumberOfStones() const {
+		return m_Stones;
 	}
 };
 

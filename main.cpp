@@ -176,10 +176,19 @@ struct ThreadData {
 
 PlayerColour playout(Game *g, PlayerColour toMove, ThreadData *td) {
 	PlayerColour col = toMove;
+	int delay = PASS * 2 - g->b.getNumberOfStones();
+	bool ignorePass = false;
 	while (g->winner == PlayerColour::NONE) {
 		std::size_t move = td->distrDefault(td->gen);
 		if (g->isIllegal(move, col) ||
-		    (move == PASS && g->countPoints() != col)) {
+		    (move == PASS && (ignorePass || g->countPoints() != col))) {
+			if (delay > 0) {
+				--delay;
+				if (move == PASS) {
+					ignorePass = true;
+				}
+				continue;
+			}
 			std::size_t possibleMoves = 0;
 			for (std::size_t i = 0; i < RESIGN; ++i) {
 				if ((i < PASS && (g->b.getValue(i) != PlayerColour::NONE ||
@@ -204,7 +213,8 @@ PlayerColour playout(Game *g, PlayerColour toMove, ThreadData *td) {
 					}
 					move = td->moves[moveIndex];
 					if (g->isIllegal(move, col) ||
-					    (move == PASS && g->countPoints() != col)) {
+					    (move == PASS &&
+					        (ignorePass || g->countPoints() != col))) {
 						--possibleMoves;
 						if (possibleMoves == 0) {
 							move = RESIGN;
@@ -219,6 +229,8 @@ PlayerColour playout(Game *g, PlayerColour toMove, ThreadData *td) {
 		}
 		g->playMove(move, col);
 		col = col.invert();
+		delay = PASS * 2 - g->b.getNumberOfStones();
+		ignorePass = false;
 	}
 	return g->winner;
 }

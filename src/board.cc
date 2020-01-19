@@ -56,6 +56,7 @@ void Board::playMove(std::size_t x, std::size_t y, PlayerColour colour) {
 	m_State[offset] = colour;
 	m_Groups[offset] = {0, 1};
 	m_GroupRelation[offset] = offset;
+	++m_Stones;
 	std::size_t maxGroup = offset;
 	std::unordered_set<std::size_t> neighbours;
 	neighbours.insert(offset);
@@ -97,6 +98,7 @@ void Board::removeGroup(std::size_t offset, std::size_t x, std::size_t y) {
 	assert(colour == PlayerColour::WHITE || colour == PlayerColour::BLACK);
 	m_Hash ^= HashValues::getInstance()->getValue(offset, colour);
 	m_State[offset] = PlayerColour::NONE;
+	--m_Stones;
 	for (auto [tx, ty, toffset] : BoardTraverse(x, y, offset, m_Size)) {
 		if (m_State[toffset] == PlayerColour::NONE) {
 			continue;
