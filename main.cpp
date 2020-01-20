@@ -38,7 +38,7 @@
 #include "src/board.hpp"
 
 const std::size_t BOARD_SIZE = 9;
-const std::size_t NUM_SIM = 100000;
+const std::size_t NUM_SIM = 10000;
 const std::size_t PASS = BOARD_SIZE * BOARD_SIZE;
 const std::size_t RESIGN = PASS + 1;
 
@@ -363,23 +363,17 @@ std::size_t findMove(Game *g, PlayerColour col, int seed) {
 	std::atomic<std::size_t> playouts = 0;
 	std::seed_seq seq{seed};
 	std::vector<std::thread> threads;
-	std::size_t cpuCount = std::thread::hardware_concurrency();
-	if (cpuCount == 0) {
-		cpuCount = 1;
-	}
+	std::size_t cpuCount = 1;
 	std::vector<int> seeds(cpuCount);
 	seq.generate(seeds.begin(), seeds.end());
 	for (std::size_t i = 0; i < cpuCount; ++i) {
-		threads.emplace_back(
-		    [&](int seed) {
-			    ThreadData td;
-			    td.gen.seed(seed);
-			    while (++playouts <= NUM_SIM) {
-				    Game clone = *g;
-				    simulate(&clone, &root, col, &td);
-			    }
-		    },
-		    seeds[i]);
+		int seed = seeds[1];
+		ThreadData td;
+		td.gen.seed(seed);
+		while (++playouts <= NUM_SIM) {
+			Game clone = *g;
+			simulate(&clone, &root, col, &td);
+		}
 	}
 	for (auto &t : threads) {
 		t.join();
@@ -398,13 +392,11 @@ std::size_t findMove(Game *g, PlayerColour col, int seed) {
 int main(int argc, char **argv) {
 	std::random_device rd;
 	std::default_random_engine gen;
-	gen.seed(
-	    std::chrono::high_resolution_clock::now().time_since_epoch().count() +
-	    rd());
+	gen.seed(0xEAEAEAEA);
 	HashValues::getInstance()->init(PASS);
-	Game g;
-	PlayerColour col = PlayerColour::BLACK;
-	while (g.winner == PlayerColour::NONE) {
+	for (std::size_t i = 0; i < 10; ++i) {
+		Game g;
+		PlayerColour col = PlayerColour::BLACK;
 		auto time = std::chrono::high_resolution_clock::now();
 		auto move = findMove(&g, col, gen());
 		std::cout << playerToString(col) << ' ' << moveToString(move)
@@ -418,8 +410,6 @@ int main(int argc, char **argv) {
 		                 1000.0
 		          << 's' << std::endl;
 		printBoard(&g.b);
-		col = col.invert();
 	}
-	std::cout << "Winner: " << playerToString(g.winner) << std::endl;
 	return 0;
 }
