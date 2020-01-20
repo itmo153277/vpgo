@@ -367,7 +367,7 @@ std::size_t findMove(Game *g, PlayerColour col, int seed) {
 	std::vector<int> seeds(cpuCount);
 	seq.generate(seeds.begin(), seeds.end());
 	for (std::size_t i = 0; i < cpuCount; ++i) {
-		int seed = seeds[1];
+		int seed = seeds[0];
 		ThreadData td;
 		td.gen.seed(seed);
 		while (++playouts <= NUM_SIM) {
