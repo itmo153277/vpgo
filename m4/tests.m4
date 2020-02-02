@@ -1,5 +1,4 @@
 AC_DEFUN([VPGO_INIT_TESTS], [
-
     can_run_unit_tests="yes"
     if test "x$BOOST_UNIT_TEST_FRAMEWORK_LIB" = "x" ; then
         can_run_unit_tests="no"
@@ -22,5 +21,4 @@ AC_DEFUN([VPGO_INIT_TESTS], [
     fi
     AM_CONDITIONAL([UNITTESTS_ENABLED], [test "x$can_run_unit_tests" = "xyes"])
     AC_REQUIRE_AUX_FILE([tap-driver.sh])
-
 ])
