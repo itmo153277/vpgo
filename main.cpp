@@ -607,7 +607,7 @@ void playMove(const GtpCommandDef &cd, Game *g) {
 		std::string moveStr = cd.arguments[1];
 		std::transform(colourStr.begin(), colourStr.end(), colourStr.begin(),
 		    [](char c) { return std::tolower(c); });
-		std::transform(colourStr.begin(), colourStr.end(), colourStr.begin(),
+		std::transform(moveStr.begin(), moveStr.end(), moveStr.begin(),
 		    [](char c) { return std::tolower(c); });
 		if (colourStr == "white" || colourStr == "w") {
 			col = PlayerColour::WHITE;
