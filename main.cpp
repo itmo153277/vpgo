@@ -554,6 +554,7 @@ void printCommands(const GtpCommandDef &cd) {
 	    "komi\n"
 	    "play\n"
 	    "genmove";
+	printSuccessMessage(cd, knownCommands);
 }
 void setBoardSize(const GtpCommandDef &cd) {
 	int newSize;
