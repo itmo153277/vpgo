@@ -24,6 +24,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cmath>
+#include <cctype>
 #include <unordered_set>
 #include <iostream>
 #include <iomanip>
@@ -33,9 +34,16 @@
 #include <thread>
 #include <atomic>
 #include <memory>
+#include <string>
+#include <sstream>
+#include <algorithm>
 #include "src/vpgo.hpp"
 #include "src/hash.hpp"
 #include "src/board.hpp"
+
+#ifdef VERSION
+#undef VERSION
+#endif
 
 const std::size_t BOARD_SIZE = 9;
 const std::size_t NUM_SIM = 100000;
@@ -140,16 +148,16 @@ void printBoard(Board *b) {
 			PlayerColour v = b->getValue(x, y);
 			switch (v) {
 			case PlayerColour::BLACK:
-				std::cout << " B ";
+				std::cerr << " B ";
 				break;
 			case PlayerColour::WHITE:
-				std::cout << " W ";
+				std::cerr << " W ";
 				break;
 			default:
-				std::cout << " - ";
+				std::cerr << " - ";
 			}
 		}
-		std::cout << std::endl;
+		std::cerr << std::endl;
 	}
 }
 
@@ -259,31 +267,31 @@ void printStats(Node *n) {
 		effortMap[m->move] =
 		    static_cast<int>(100.0 * m->visits / n->visits + 0.5);
 	}
-	std::cout << "Win %: " << 1.0 * n->wins / n->visits << std::endl;
-	std::cout << "Playouts: " << n->visits << std::endl;
-	std::cout << "Win % map:" << std::endl;
+	std::cerr << "Win %: " << 1.0 * n->wins / n->visits << std::endl;
+	std::cerr << "Playouts: " << n->visits << std::endl;
+	std::cerr << "Win % map:" << std::endl;
 	for (std::size_t y = 0; y < BOARD_SIZE; ++y) {
 		for (std::size_t x = 0; x < BOARD_SIZE; ++x) {
 			if (x != 0) {
-				std::cout << ' ';
+				std::cerr << ' ';
 			}
-			std::cout << std::setw(2) << winP[x + y * BOARD_SIZE];
+			std::cerr << std::setw(2) << winP[x + y * BOARD_SIZE];
 		}
-		std::cout << std::endl;
+		std::cerr << std::endl;
 	}
-	std::cout << "PASS = " << std::setw(2) << winP[PASS] << std::endl;
-	std::cout << "Effort:" << std::endl;
+	std::cerr << "PASS = " << std::setw(2) << winP[PASS] << std::endl;
+	std::cerr << "Effort:" << std::endl;
 	for (std::size_t y = 0; y < BOARD_SIZE; ++y) {
 		for (std::size_t x = 0; x < BOARD_SIZE; ++x) {
 			if (x != 0) {
-				std::cout << ' ';
+				std::cerr << ' ';
 			}
-			std::cout << std::setw(2) << effortMap[x + y * BOARD_SIZE];
+			std::cerr << std::setw(2) << effortMap[x + y * BOARD_SIZE];
 		}
-		std::cout << std::endl;
+		std::cerr << std::endl;
 	}
-	std::cout << "PASS = " << std::setw(2) << effortMap[PASS] << std::endl;
-	std::cout << "Best line: ";
+	std::cerr << "PASS = " << std::setw(2) << effortMap[PASS] << std::endl;
+	std::cerr << "Best line: ";
 	Node *curMove = n;
 	for (std::size_t i = 0; i < 5; ++i) {
 		if (!curMove->expanded) {
@@ -302,10 +310,10 @@ void printStats(Node *n) {
 		}
 		std::size_t move = next->move;
 		curMove = next;
-		std::cout << moveToString(move) << ' ';
-		std::cout << '(' << std::setw(0) << curMove->visits << ") ";
+		std::cerr << moveToString(move) << ' ';
+		std::cerr << '(' << std::setw(0) << curMove->visits << ") ";
 	}
-	std::cout << std::endl;
+	std::cerr << std::endl;
 }
 
 Node *selectMove(Node *n, ThreadData *td) {
@@ -358,7 +366,9 @@ void simulate(Game *g, Node *n, PlayerColour col, ThreadData *td) {
 	}
 }
 
-std::size_t findMove(Game *g, PlayerColour col, int seed) {
+std::size_t findMove(
+    Game *g, PlayerColour col, std::default_random_engine::result_type seed) {
+	auto start = std::chrono::high_resolution_clock::now();
 	Node root;
 	std::atomic<std::size_t> playouts = 0;
 	std::seed_seq seq{seed};
@@ -367,16 +377,17 @@ std::size_t findMove(Game *g, PlayerColour col, int seed) {
 	if (cpuCount == 0) {
 		cpuCount = 1;
 	}
-	std::vector<int> seeds(cpuCount);
+	std::vector<std::seed_seq::result_type> seeds(cpuCount);
 	seq.generate(seeds.begin(), seeds.end());
 	for (std::size_t i = 0; i < cpuCount; ++i) {
 		threads.emplace_back(
-		    [&](int threadSeed) {
+		    [&](std::seed_seq::result_type threadSeed) {
 			    ThreadData td;
 			    td.gen.seed(threadSeed);
 			    while (++playouts <= NUM_SIM) {
 				    Game clone = *g;
 				    simulate(&clone, &root, col, &td);
+				    std::this_thread::yield();
 			    }
 		    },
 		    seeds[i]);
@@ -385,7 +396,282 @@ std::size_t findMove(Game *g, PlayerColour col, int seed) {
 		t.join();
 	}
 	printStats(&root);
+	std::cerr << "Passed time: "
+	          << std::chrono::duration_cast<std::chrono::milliseconds>(
+	                 std::chrono::high_resolution_clock::now() - start)
+	                     .count() /
+	                 1000.0
+	          << 's' << std::endl;
 	return bestMove(&root);
+}
+
+struct GtpCommandDef {
+	bool hasCommandId;
+	int commandId;
+	std::string commandName;
+	std::vector<std::string> arguments;
+};
+
+enum class GtpCommand {
+	UNKNOWN,
+	PROTOCOL_VERSION,
+	NAME,
+	VERSION,
+	KNOWN_COMMNAD,
+	LIST_COMMANDS,
+	QUIT,
+	BOARDSIZE,
+	CLEAR_BOARD,
+	KOMI,
+	PLAY,
+	GENMOVE
+};
+
+GtpCommandDef parseCommand(const std::string &inputCommand) {
+	std::string command;
+	command.reserve(inputCommand.size());
+	bool truncateComment = false;
+	for (auto c : inputCommand) {
+		if (c == '#') {
+			break;
+		}
+		if (c == 9) {
+			command += ' ';
+		} else if (c >= 32 && c != 127) {
+			command += c;
+		}
+	}
+	auto leftPos = command.find_first_not_of(" ");
+	if (leftPos == std::string::npos) {
+		return GtpCommandDef();
+	}
+	auto rightPos = command.find_last_not_of(" ");
+	command = command.substr(leftPos, rightPos + 1);
+	std::stringstream ss(command);
+	GtpCommandDef res;
+	if (ss >> res.commandId) {
+		res.hasCommandId = true;
+	} else {
+		res.hasCommandId = false;
+		ss.clear();
+	}
+	ss >> res.commandName;
+	std::string argument;
+	while (ss >> argument) {
+		res.arguments.push_back(argument);
+	}
+	return res;
+}
+
+bool ignoreCommand(const GtpCommandDef &cd) {
+	return !cd.hasCommandId && cd.commandName.size() == 0;
+}
+
+GtpCommand parseCommandName(const std::string &s) {
+	if (s == "protocol_version") {
+		return GtpCommand::PROTOCOL_VERSION;
+	} else if (s == "name") {
+		return GtpCommand::NAME;
+	} else if (s == "version") {
+		return GtpCommand::VERSION;
+	} else if (s == "known_command") {
+		return GtpCommand::KNOWN_COMMNAD;
+	} else if (s == "list_commands") {
+		return GtpCommand::LIST_COMMANDS;
+	} else if (s == "quit") {
+		return GtpCommand::QUIT;
+	} else if (s == "boardsize") {
+		return GtpCommand::BOARDSIZE;
+	} else if (s == "clear_board") {
+		return GtpCommand::CLEAR_BOARD;
+	} else if (s == "komi") {
+		return GtpCommand::KOMI;
+	} else if (s == "play") {
+		return GtpCommand::PLAY;
+	} else if (s == "genmove") {
+		return GtpCommand::GENMOVE;
+	} else {
+		return GtpCommand::UNKNOWN;
+	}
+}
+
+void printSuccessMessage(const GtpCommandDef &cd, const std::string &s) {
+	std::cout << '=';
+	if (cd.hasCommandId) {
+		std::cout << cd.commandId;
+	}
+	if (s.size() > 0) {
+		std::cout << ' ' << s;
+	}
+	std::cout << std::endl << std::endl;
+}
+
+void printFailureMessage(const GtpCommandDef &cd, const std::string &s) {
+	std::cout << '?';
+	if (cd.hasCommandId) {
+		std::cout << cd.commandId;
+	}
+	if (s.size() > 0) {
+		std::cout << ' ' << s;
+	}
+	std::cout << std::endl << std::endl;
+}
+
+void unknownCommand(const GtpCommandDef &cd) {
+	printFailureMessage(cd, "unknown command");
+}
+void printProtocolVersion(const GtpCommandDef &cd) {
+	printSuccessMessage(cd, "2");
+}
+void printName(const GtpCommandDef &cd) {
+	printSuccessMessage(cd, "vpgo-random");
+}
+void printVersion(const GtpCommandDef &cd) {
+	printSuccessMessage(cd, "poc");
+}
+void printKnownCommand(const GtpCommandDef &cd) {
+	bool known = false;
+	if (cd.arguments.size() > 0) {
+		auto cmd = parseCommandName(cd.arguments[0]);
+		known = cmd != GtpCommand::UNKNOWN;
+	}
+	if (known) {
+		printSuccessMessage(cd, "true");
+	} else {
+		printSuccessMessage(cd, "false");
+	}
+}
+void printCommands(const GtpCommandDef &cd) {
+	const char knownCommands[] =
+	    "protocol_version\n"
+	    "name\n"
+	    "version\n"
+	    "known_command\n"
+	    "list_commands\n"
+	    "quit\n"
+	    "boardsize\n"
+	    "clear_board\n"
+	    "komi\n"
+	    "play\n"
+	    "genmove";
+}
+void setBoardSize(const GtpCommandDef &cd) {
+	int newSize;
+	bool syntaxError = false;
+	if (cd.arguments.size() != 1) {
+		syntaxError = true;
+	}
+	if (!syntaxError) {
+		std::stringstream ss(cd.arguments[0]);
+		syntaxError = !(ss >> newSize);
+	}
+	if (syntaxError) {
+		printFailureMessage(cd, "syntax error");
+	} else if (newSize != BOARD_SIZE) {
+		printFailureMessage(cd, "unacceptable size");
+	} else {
+		printSuccessMessage(cd, "");
+	}
+}
+void clearBoard(const GtpCommandDef &cd, Game *g) {
+	*g = Game();
+	printSuccessMessage(cd, "");
+}
+void setKomi(const GtpCommandDef &cd) {
+	float newKomi;
+	bool syntaxError = false;
+	if (cd.arguments.size() != 1) {
+		syntaxError = true;
+	}
+	if (!syntaxError) {
+		std::stringstream ss(cd.arguments[0]);
+		syntaxError = !(ss >> newKomi);
+	}
+	if (syntaxError) {
+		printFailureMessage(cd, "syntax error");
+	} else {
+		// TODO(me): We actually ignore any komi
+		printSuccessMessage(cd, "");
+	}
+}
+void playMove(const GtpCommandDef &cd, Game *g) {
+	bool syntaxError = false;
+	std::size_t move;
+	PlayerColour col;
+	if (cd.arguments.size() != 2) {
+		syntaxError = true;
+	}
+	if (!syntaxError) {
+		std::string colourStr = cd.arguments[0];
+		std::string moveStr = cd.arguments[1];
+		std::transform(colourStr.begin(), colourStr.end(), colourStr.begin(),
+		    [](char c) { return std::tolower(c); });
+		std::transform(colourStr.begin(), colourStr.end(), colourStr.begin(),
+		    [](char c) { return std::tolower(c); });
+		if (colourStr == "white" || colourStr == "w") {
+			col = PlayerColour::WHITE;
+		} else if (colourStr == "black" || colourStr == "b") {
+			col = PlayerColour::BLACK;
+		} else {
+			syntaxError = true;
+		}
+		if (moveStr == "pass") {
+			move = PASS;
+		} else if (moveStr.size() != 2) {
+			syntaxError = true;
+		} else {
+			int x = moveStr[0] - 'a';
+			int y = moveStr[1] - '1';
+			if (x >= 9) {
+				--x;
+			}
+			y = BOARD_SIZE - y - 1;
+			if (x < 0 || x > BOARD_SIZE || y < 0 || y > BOARD_SIZE) {
+				syntaxError = true;
+			} else {
+				move = y * BOARD_SIZE + x;
+			}
+		}
+	}
+	if (syntaxError) {
+		printFailureMessage(cd, "syntax error");
+	} else if (g->isIllegal(move, col)) {
+		printFailureMessage(cd, "illegal move");
+	} else {
+		g->playMove(move, col);
+		printBoard(&g->b);
+		printSuccessMessage(cd, "");
+	}
+}
+void genMove(const GtpCommandDef &cd, Game *g,
+    std::default_random_engine::result_type seed) {
+	bool syntaxError = false;
+	PlayerColour col;
+	if (cd.arguments.size() != 1) {
+		syntaxError = true;
+	}
+	if (!syntaxError) {
+		std::string colourStr = cd.arguments[0];
+		std::transform(colourStr.begin(), colourStr.end(), colourStr.begin(),
+		    [](char c) { return std::tolower(c); });
+		if (colourStr == "white" || colourStr == "w") {
+			col = PlayerColour::WHITE;
+		} else if (colourStr == "black" || colourStr == "b") {
+			col = PlayerColour::BLACK;
+		} else {
+			syntaxError = true;
+		}
+	}
+	if (syntaxError) {
+		printFailureMessage(cd, "syntax error");
+	} else if (g->winner != PlayerColour::NONE) {
+		printFailureMessage(cd, "game is already decided");
+	} else {
+		auto move = findMove(g, col, seed);
+		g->playMove(move, col);
+		printBoard(&g->b);
+		printSuccessMessage(cd, moveToString(move));
+	}
 }
 
 /**
@@ -404,22 +690,55 @@ int main(int argc, char **argv) {
 	HashValues::getInstance()->init(PASS);
 	Game g;
 	PlayerColour col = PlayerColour::BLACK;
-	while (g.winner == PlayerColour::NONE) {
-		auto time = std::chrono::high_resolution_clock::now();
-		auto move = findMove(&g, col, gen());
-		std::cout << playerToString(col) << ' ' << moveToString(move)
-		          << std::endl;
-		g.playMove(move, col);
-		auto calcDuration = std::chrono::high_resolution_clock::now() - time;
-		std::cout << "Time elapsed: " << std::setw(0)
-		          << std::chrono::duration_cast<std::chrono::milliseconds>(
-		                 calcDuration)
-		                     .count() /
-		                 1000.0
-		          << 's' << std::endl;
-		printBoard(&g.b);
-		col = col.invert();
+	std::string commandStr;
+	while (std::getline(std::cin, commandStr)) {
+		auto cd = parseCommand(commandStr);
+		if (ignoreCommand(cd)) {
+			continue;
+		}
+		auto cmd = parseCommandName(cd.commandName);
+		bool quit = false;
+		switch (cmd) {
+		case GtpCommand::UNKNOWN:
+			unknownCommand(cd);
+			break;
+		case GtpCommand::QUIT:
+			quit = true;
+			break;
+		case GtpCommand::PROTOCOL_VERSION:
+			printProtocolVersion(cd);
+			break;
+		case GtpCommand::NAME:
+			printName(cd);
+			break;
+		case GtpCommand::VERSION:
+			printVersion(cd);
+			break;
+		case GtpCommand::KNOWN_COMMNAD:
+			printKnownCommand(cd);
+			break;
+		case GtpCommand::LIST_COMMANDS:
+			printCommands(cd);
+			break;
+		case GtpCommand::BOARDSIZE:
+			setBoardSize(cd);
+			break;
+		case GtpCommand::CLEAR_BOARD:
+			clearBoard(cd, &g);
+			break;
+		case GtpCommand::KOMI:
+			setKomi(cd);
+			break;
+		case GtpCommand::PLAY:
+			playMove(cd, &g);
+			break;
+		case GtpCommand::GENMOVE:
+			genMove(cd, &g, gen());
+			break;
+		}
+		if (quit) {
+			break;
+		}
 	}
-	std::cout << "Winner: " << playerToString(g.winner) << std::endl;
 	return 0;
 }
