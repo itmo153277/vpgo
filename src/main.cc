@@ -41,10 +41,6 @@
 #include "src/hash.hpp"
 #include "src/board.hpp"
 
-#ifdef VERSION
-#undef VERSION
-#endif
-
 const std::size_t BOARD_SIZE = 9;
 const std::size_t NUM_SIM = 100000;
 const std::size_t PASS = BOARD_SIZE * BOARD_SIZE;
