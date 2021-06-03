@@ -5,7 +5,7 @@
  */
 /*
     Simple Go engine
-    Copyright (C) 2019 Ivanov VIktor
+    Copyright (C) 2019-2021 Ivanov Viktor
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -138,8 +138,9 @@ std::string playerToString(PlayerColour col) {
 		return "b";
 	case PlayerColour::WHITE:
 		return "w";
+	default:
+		return "?";
 	}
-	return "?";
 }
 
 void printBoard(Board *b) {
@@ -428,6 +429,7 @@ enum class GtpCommand {
 };
 
 GtpCommandDef parseCommand(const std::string &inputCommand) {
+	GtpCommandDef res;
 	std::string command;
 	command.reserve(inputCommand.size());
 	bool truncateComment = false;
@@ -443,12 +445,11 @@ GtpCommandDef parseCommand(const std::string &inputCommand) {
 	}
 	auto leftPos = command.find_first_not_of(" ");
 	if (leftPos == std::string::npos) {
-		return GtpCommandDef();
+		return res;
 	}
 	auto rightPos = command.find_last_not_of(" ");
 	command = command.substr(leftPos, rightPos + 1);
 	std::stringstream ss(command);
-	GtpCommandDef res;
 	if (ss >> res.commandId) {
 		res.hasCommandId = true;
 	} else {

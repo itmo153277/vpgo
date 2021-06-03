@@ -45,7 +45,7 @@ check_PROGRAMS = $(UNITTESTS)
 @DX_RULES@
 
 $(DX_CONFIG): doxygen.cfg
-	$(AM_V_GEN)(cp $< $@ ; $(DX_DOXYGEN) -s -u $@ > /dev/null)
+	$(AM_V_GEN)(cp $< $@ ; $(DX_DOXYGEN) -s -u $@ > /dev/null 2>&1)
 
 EXTRA_DIST = \
 	autogen.sh \

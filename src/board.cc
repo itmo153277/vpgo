@@ -4,7 +4,7 @@
  */
 /*
     Simple Go engine
-    Copyright (C) 2019 Ivanov VIktor
+    Copyright (C) 2019-2021 Ivanov Viktor
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -123,8 +123,8 @@ void Board::removeGroup(std::size_t offset, std::size_t x, std::size_t y) {
 bool Board::isSuicide(std::size_t x, std::size_t y, PlayerColour colour) const {
 	assert(x < m_Size);
 	assert(y < m_Size);
-	std::unordered_map<std::size_t, std::size_t> sameNeightbours;
-	std::unordered_map<std::size_t, std::size_t> oppositeNeightbours;
+	std::unordered_map<std::size_t, std::size_t> sameNeighbours;
+	std::unordered_map<std::size_t, std::size_t> oppositeNeighbours;
 	for (auto [tx, ty, toffset] :
 	    BoardTraverse(x, y, coordsToOffset(x, y), m_Size)) {
 		if (m_State[toffset] == PlayerColour::NONE) {
@@ -132,20 +132,20 @@ bool Board::isSuicide(std::size_t x, std::size_t y, PlayerColour colour) const {
 		}
 		const std::size_t group = getGroupLocation(toffset);
 		if (m_State[group] == colour) {
-			auto neightbour =
-			    sameNeightbours.insert({group, m_Groups[group].edges}).first;
-			--neightbour->second;
+			auto neighbour =
+			    sameNeighbours.insert({group, m_Groups[group].edges}).first;
+			--neighbour->second;
 		} else {
-			auto neightbour =
-			    oppositeNeightbours.insert({group, m_Groups[group].edges})
+			auto neighbour =
+			    oppositeNeighbours.insert({group, m_Groups[group].edges})
 			        .first;
-			--neightbour->second;
-			if (neightbour->second == 0) {
+			--neighbour->second;
+			if (neighbour->second == 0) {
 				return false;
 			}
 		}
 	}
-	for (auto [group, edges] : sameNeightbours) {
+	for (auto [group, edges] : sameNeighbours) {
 		if (edges > 0) {
 			return false;
 		}
@@ -227,7 +227,7 @@ std::uint_least64_t Board::preComputeHash(
 	std::size_t offset = coordsToOffset(x, y);
 	std::uint_least64_t currentHash =
 	    m_Hash ^ HashValues::getInstance()->getValue(offset, colour);
-	std::unordered_map<std::size_t, std::size_t> neightbours;
+	std::unordered_map<std::size_t, std::size_t> neighbours;
 	std::queue<std::tuple<std::size_t, std::size_t, std::size_t>>
 	    stonesToRemove;
 	std::unordered_set<std::size_t> removedStones;
@@ -237,10 +237,10 @@ std::uint_least64_t Board::preComputeHash(
 			continue;
 		}
 		const std::size_t group = getGroupLocation(toffset);
-		auto neightbour =
-		    neightbours.insert({group, m_Groups[group].edges}).first;
-		--neightbour->second;
-		if (neightbour->second == 0) {
+		auto neighbour =
+		    neighbours.insert({group, m_Groups[group].edges}).first;
+		--neighbour->second;
+		if (neighbour->second == 0) {
 			stonesToRemove.push({tx, ty, toffset});
 		}
 	}

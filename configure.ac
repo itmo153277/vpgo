@@ -1,7 +1,7 @@
 AC_PREREQ([2.69])
 
 AC_INIT([vpgo], [0.1], [viktprog@gmail.com])
-AC_COPYRIGHT([Copyright (c) 2019 Ivanov Viktor])
+AC_COPYRIGHT([Copyright (c) 2019-2021 Ivanov Viktor])
 
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR([auxdir])

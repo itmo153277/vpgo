@@ -4,7 +4,7 @@
  */
 /*
     Simple Go engine
-    Copyright (C) 2020 Ivanov VIktor
+    Copyright (C) 2020-2021 Ivanov Viktor
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -73,8 +73,9 @@ struct HashValues {
 			return m_Values[offset * 2];
 		case PlayerColour::WHITE:
 			return m_Values[offset * 2 + 1];
+		default:
+			return m_InitialValue;
 		}
-		return m_InitialValue;
 	}
 
 	/**

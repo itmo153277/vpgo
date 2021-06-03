@@ -4,7 +4,7 @@
  */
 /*
     Simple Go engine
-    Copyright (C) 2019 Ivanov VIktor
+    Copyright (C) 2019-2021 Ivanov Viktor
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
