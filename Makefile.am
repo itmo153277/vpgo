@@ -22,7 +22,7 @@ libvpgomain_a_SOURCES = $(VPGO_MAIN)
 
 bin_PROGRAMS = vpgo
 vpgo_SOURCES = \
-	main.cpp
+	src/main.cc
 vpgo_CPPFLAGS = $(AM_CPPFLAGS) $(BOOST_CPPFLAGS)
 vpgo_LDADD = $(BOOST_LDFLAGS) $(BOOST_PROGRAM_OPTIONS_LIB) libvpgomain.a
 
