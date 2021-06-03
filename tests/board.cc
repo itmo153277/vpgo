@@ -20,6 +20,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "../src/board.hpp"
+
 #include <cstddef>
 #include <utility>
 #include <iostream>
@@ -27,7 +29,6 @@
 #include <algorithm>
 #include <boost/test/unit_test.hpp>
 #include <boost/test/data/test_case.hpp>
-#include "../src/board.hpp"
 
 /**
  * Move description

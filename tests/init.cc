@@ -26,6 +26,7 @@
 #include <boost/test/execution_monitor.hpp>
 #include <boost/test/tree/visitor.hpp>
 #include <boost/test/tree/traverse.hpp>
+#include <cstdlib>
 #include <string>
 #include <sstream>
 #include <iostream>
@@ -162,9 +163,8 @@ public:
  */
 struct TestConfiguration {
 	TestConfiguration() {
-		int argc = framework::master_test_suite().argc;
-		char **argv = framework::master_test_suite().argv;
-		if (argc <= 1 || std::string(argv[1]) != "NO_TAP") {
+		const char *enableTapFormat = std::getenv("VPGO_ENABLE_TAP_FORMAT");
+		if (enableTapFormat && std::string(enableTapFormat) == "1") {
 			unit_test_log.set_formatter(new tap_formatter());
 			unit_test_log.set_threshold_level(log_test_units);
 		}
