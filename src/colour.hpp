@@ -24,8 +24,6 @@
 #ifndef SRC_COLOUR_HPP_
 #define SRC_COLOUR_HPP_
 
-#include <cstddef>
-
 #include "vpgo.hpp"
 
 /**
@@ -46,7 +44,7 @@ public:
 	/**
 	 * Number of values
 	 */
-	static constexpr std::size_t COUNT = 4;
+	static constexpr int COUNT = 4;
 
 private:
 	/**
@@ -58,7 +56,8 @@ public:
 	/**
 	 * Default ctor
 	 */
-	PlayerColour() = default;
+	PlayerColour() : m_val(Value::NONE) {
+	}
 	/**
 	 * Conversion ctor
 	 */

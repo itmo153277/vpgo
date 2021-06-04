@@ -22,7 +22,6 @@
 
 #include "board.hpp"
 #include <cassert>
-#include <cstddef>
 #include <unordered_set>
 #include <unordered_map>
 #include <queue>
@@ -33,7 +32,7 @@
  * @param from Smaller group
  * @param to Larger group
  */
-void Board::mergeGroups(std::size_t from, std::size_t to) {
+void Board::mergeGroups(board_offset_t from, board_offset_t to) {
 	m_GroupRelation[from] = to;
 	m_Groups[to].edges += m_Groups[from].edges;
 	m_Groups[to].stones += m_Groups[from].stones;
@@ -46,25 +45,25 @@ void Board::mergeGroups(std::size_t from, std::size_t to) {
  * @param y Y coord
  * @param colour Stone colour
  */
-void Board::playMove(std::size_t x, std::size_t y, PlayerColour colour) {
+void Board::playMove(board_coord_t x, board_coord_t y, PlayerColour colour) {
 	assert(x < m_Size);
 	assert(y < m_Size);
 	assert(colour == PlayerColour::BLACK || colour == PlayerColour::WHITE);
-	const std::size_t offset = coordsToOffset(x, y);
+	const board_offset_t offset = coordsToOffset(x, y);
 	assert(m_State[offset] == PlayerColour::NONE);
 	m_Hash ^= HashValues::getInstance()->getValue(offset, colour);
 	m_State[offset] = colour;
 	m_Groups[offset] = {0, 1};
 	m_GroupRelation[offset] = offset;
 	++m_Stones;
-	std::size_t maxGroup = offset;
-	std::unordered_set<std::size_t> neighbours;
+	board_offset_t maxGroup = offset;
+	std::unordered_set<board_offset_t> neighbours;
 	neighbours.insert(offset);
 	for (auto [tx, ty, toffset] : BoardTraverse(x, y, offset, m_Size)) {
 		if (m_State[toffset] == PlayerColour::NONE) {
 			m_Groups[offset].edges++;
 		} else {
-			const std::size_t group = getGroupLocation(toffset);
+			const board_offset_t group = getGroupLocation(toffset);
 			m_Groups[group].edges--;
 			if (m_State[group] == colour) {
 				neighbours.insert(group);
@@ -90,7 +89,8 @@ void Board::playMove(std::size_t x, std::size_t y, PlayerColour colour) {
  * @param x X coord
  * @param y Y coord
  */
-void Board::removeGroup(std::size_t offset, std::size_t x, std::size_t y) {
+void Board::removeGroup(
+    board_offset_t offset, board_coord_t x, board_coord_t y) {
 	assert(x < m_Size);
 	assert(y < m_Size);
 	assert(offset == coordsToOffset(x, y));
@@ -106,7 +106,7 @@ void Board::removeGroup(std::size_t offset, std::size_t x, std::size_t y) {
 		if (m_State[toffset] == colour) {
 			removeGroup(toffset, tx, ty);
 		} else {
-			const std::size_t group = getGroupLocation(toffset);
+			const board_offset_t group = getGroupLocation(toffset);
 			m_Groups[group].edges++;
 		}
 	}
@@ -120,25 +120,25 @@ void Board::removeGroup(std::size_t offset, std::size_t x, std::size_t y) {
  * @param colour Stone colour
  * @return True if suicide
  */
-bool Board::isSuicide(std::size_t x, std::size_t y, PlayerColour colour) const {
+bool Board::isSuicide(
+    board_coord_t x, board_coord_t y, PlayerColour colour) const {
 	assert(x < m_Size);
 	assert(y < m_Size);
-	std::unordered_map<std::size_t, std::size_t> sameNeighbours;
-	std::unordered_map<std::size_t, std::size_t> oppositeNeighbours;
+	std::unordered_map<board_offset_t, int> sameNeighbours;
+	std::unordered_map<board_offset_t, int> oppositeNeighbours;
 	for (auto [tx, ty, toffset] :
 	    BoardTraverse(x, y, coordsToOffset(x, y), m_Size)) {
 		if (m_State[toffset] == PlayerColour::NONE) {
 			return false;
 		}
-		const std::size_t group = getGroupLocation(toffset);
+		const board_offset_t group = getGroupLocation(toffset);
 		if (m_State[group] == colour) {
 			auto neighbour =
 			    sameNeighbours.insert({group, m_Groups[group].edges}).first;
 			--neighbour->second;
 		} else {
 			auto neighbour =
-			    oppositeNeighbours.insert({group, m_Groups[group].edges})
-			        .first;
+			    oppositeNeighbours.insert({group, m_Groups[group].edges}).first;
 			--neighbour->second;
 			if (neighbour->second == 0) {
 				return false;
@@ -158,13 +158,14 @@ bool Board::isSuicide(std::size_t x, std::size_t y, PlayerColour colour) const {
  *
  * @return Pair {Black, White}
  */
-std::pair<std::size_t, std::size_t> Board::countPoints() const {
+std::pair<int, int> Board::countPoints() const {
 	std::vector<bool> visited(m_State.size());
 	std::vector<bool> traversed(m_State.size());
-	std::size_t black = 0;
-	std::size_t white = 0;
-	for (std::size_t y = 0, offset = 0; y < m_Size; ++y) {
-		for (std::size_t x = 0; x < m_Size; ++x, ++offset) {
+	int black = 0;
+	int white = 0;
+	board_offset_t offset = 0;
+	for (board_coord_t y = 0; y < m_Size; ++y) {
+		for (board_coord_t x = 0; x < m_Size; ++x, ++offset) {
 			if (visited[offset]) {
 				continue;
 			}
@@ -175,8 +176,9 @@ std::pair<std::size_t, std::size_t> Board::countPoints() const {
 				++white;
 			} else {
 				PlayerColour colour = PlayerColour::NONE;
-				std::size_t count = 0;
-				std::queue<std::tuple<std::size_t, std::size_t, std::size_t>>
+				int count = 0;
+				std::queue<
+				    std::tuple<board_coord_t, board_coord_t, board_offset_t>>
 				    queue;
 				queue.push({x, y, offset});
 				while (queue.size() > 0) {
@@ -221,22 +223,22 @@ std::pair<std::size_t, std::size_t> Board::countPoints() const {
  * @return Hash value
  */
 std::uint_least64_t Board::preComputeHash(
-    std::size_t x, std::size_t y, PlayerColour colour) const {
+    board_coord_t x, board_coord_t y, PlayerColour colour) const {
 	assert(x < m_Size);
 	assert(y < m_Size);
-	std::size_t offset = coordsToOffset(x, y);
+	board_offset_t offset = coordsToOffset(x, y);
 	std::uint_least64_t currentHash =
 	    m_Hash ^ HashValues::getInstance()->getValue(offset, colour);
-	std::unordered_map<std::size_t, std::size_t> neighbours;
-	std::queue<std::tuple<std::size_t, std::size_t, std::size_t>>
+	std::unordered_map<board_offset_t, int> neighbours;
+	std::queue<std::tuple<board_coord_t, board_coord_t, board_offset_t>>
 	    stonesToRemove;
-	std::unordered_set<std::size_t> removedStones;
+	std::unordered_set<board_offset_t> removedStones;
 	for (auto [tx, ty, toffset] :
 	    BoardTraverse(x, y, coordsToOffset(x, y), m_Size)) {
 		if (m_State[toffset] != colour.invert()) {
 			continue;
 		}
-		const std::size_t group = getGroupLocation(toffset);
+		const board_offset_t group = getGroupLocation(toffset);
 		auto neighbour =
 		    neighbours.insert({group, m_Groups[group].edges}).first;
 		--neighbour->second;

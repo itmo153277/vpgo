@@ -21,7 +21,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <cstddef>
 #include <cstdint>
 #include <cmath>
 #include <cctype>
@@ -41,10 +40,10 @@
 #include "src/hash.hpp"
 #include "src/board.hpp"
 
-const std::size_t BOARD_SIZE = 9;
-const std::size_t NUM_SIM = 100000;
-const std::size_t PASS = BOARD_SIZE * BOARD_SIZE;
-const std::size_t RESIGN = PASS + 1;
+const board_size_t BOARD_SIZE = 9;
+const int NUM_SIM = 100000;
+const board_offset_t PASS = BOARD_SIZE * BOARD_SIZE;
+const board_offset_t RESIGN = PASS + 1;
 
 struct Game {
 	Board b{BOARD_SIZE};
@@ -53,7 +52,7 @@ struct Game {
 	std::unordered_set<std::uint_least64_t> hashes = {
 	    HashValues::getInstance()->getInitialValue()};
 
-	bool isIllegal(std::size_t offset, PlayerColour col) const {
+	bool isIllegal(board_offset_t offset, PlayerColour col) const {
 		if (offset == RESIGN) {
 			return false;
 		}
@@ -72,7 +71,7 @@ struct Game {
 		}
 		return false;
 	}
-	void playMove(std::size_t offset, PlayerColour col) {
+	void playMove(board_offset_t offset, PlayerColour col) {
 		if (offset == RESIGN) {
 			winner = col.invert();
 			return;
@@ -110,7 +109,7 @@ struct Game {
 	}
 };
 
-std::string moveToString(std::size_t move) {
+std::string moveToString(board_offset_t move) {
 	if (move == PASS) {
 		return "pass";
 	}
@@ -140,8 +139,8 @@ std::string playerToString(PlayerColour col) {
 }
 
 void printBoard(Board *b) {
-	for (std::size_t y = 0; y < BOARD_SIZE; ++y) {
-		for (std::size_t x = 0; x < BOARD_SIZE; ++x) {
+	for (board_coord_t y = 0; y < BOARD_SIZE; ++y) {
+		for (board_coord_t x = 0; x < BOARD_SIZE; ++x) {
 			PlayerColour v = b->getValue(x, y);
 			switch (v) {
 			case PlayerColour::BLACK:
@@ -160,23 +159,23 @@ void printBoard(Board *b) {
 
 struct Node {
 	std::vector<std::unique_ptr<Node>> nodes;
-	std::atomic<std::size_t> visits = 0;
-	std::atomic<std::size_t> wins = 0;
+	std::atomic<int> visits = 0;
+	std::atomic<int> wins = 0;
 	std::atomic<bool> expanding = false;
 	std::atomic<bool> expanded = false;
 	std::atomic<bool> explored = false;
-	std::size_t move;
+	board_offset_t move;
 
 	Node() = default;
-	explicit Node(std::size_t m) {
+	explicit Node(board_offset_t m) {
 		move = m;
 	}
 };
 
 struct ThreadData {
 	std::default_random_engine gen;
-	std::vector<std::size_t> moves = std::vector<std::size_t>(RESIGN);
-	std::uniform_int_distribution<unsigned int> distrDefault{0, PASS};
+	std::vector<board_offset_t> moves = std::vector<board_offset_t>(RESIGN);
+	std::uniform_int_distribution<board_offset_t> distrDefault{0, PASS};
 };
 
 PlayerColour playout(Game *g, PlayerColour toMove, ThreadData *td) {
@@ -184,7 +183,7 @@ PlayerColour playout(Game *g, PlayerColour toMove, ThreadData *td) {
 	int delay = PASS * 2 - g->b.getNumberOfStones();
 	bool ignorePass = false;
 	while (g->winner == PlayerColour::NONE) {
-		std::size_t move = td->distrDefault(td->gen);
+		board_offset_t move = td->distrDefault(td->gen);
 		if (g->isIllegal(move, col) ||
 		    (move == PASS && (ignorePass || g->countPoints() != col))) {
 			if (delay > 0) {
@@ -194,8 +193,8 @@ PlayerColour playout(Game *g, PlayerColour toMove, ThreadData *td) {
 				}
 				continue;
 			}
-			std::size_t possibleMoves = 0;
-			for (std::size_t i = 0; i < RESIGN; ++i) {
+			int possibleMoves = 0;
+			for (board_offset_t i = 0; i < RESIGN; ++i) {
 				if ((i < PASS && (g->b.getValue(i) != PlayerColour::NONE ||
 				                     g->b.isSuicide(i, col))) ||
 				    (move == PASS && i == PASS)) {
@@ -208,7 +207,7 @@ PlayerColour playout(Game *g, PlayerColour toMove, ThreadData *td) {
 				move = RESIGN;
 			} else {
 				for (;;) {
-					std::size_t moveIndex;
+					board_offset_t moveIndex;
 					if (possibleMoves > 1) {
 						std::uniform_int_distribution<unsigned int> distr(
 						    0, possibleMoves - 1);
@@ -240,12 +239,12 @@ PlayerColour playout(Game *g, PlayerColour toMove, ThreadData *td) {
 	return g->winner;
 }
 
-std::size_t bestMove(Node *n) {
+board_offset_t bestMove(Node *n) {
 	if (1.0 * n->wins / n->visits < 0.1) {
 		return RESIGN;
 	}
-	std::size_t maxVis = 0;
-	std::size_t move = RESIGN;
+	int maxVis = 0;
+	board_offset_t move = RESIGN;
 	for (auto &m : n->nodes) {
 		if (m->visits > maxVis) {
 			move = m->move;
@@ -267,8 +266,8 @@ void printStats(Node *n) {
 	std::cerr << "Win %: " << 1.0 * n->wins / n->visits << std::endl;
 	std::cerr << "Playouts: " << n->visits << std::endl;
 	std::cerr << "Win % map:" << std::endl;
-	for (std::size_t y = 0; y < BOARD_SIZE; ++y) {
-		for (std::size_t x = 0; x < BOARD_SIZE; ++x) {
+	for (board_coord_t y = 0; y < BOARD_SIZE; ++y) {
+		for (board_coord_t x = 0; x < BOARD_SIZE; ++x) {
 			if (x != 0) {
 				std::cerr << ' ';
 			}
@@ -278,8 +277,8 @@ void printStats(Node *n) {
 	}
 	std::cerr << "PASS = " << std::setw(2) << winP[PASS] << std::endl;
 	std::cerr << "Effort:" << std::endl;
-	for (std::size_t y = 0; y < BOARD_SIZE; ++y) {
-		for (std::size_t x = 0; x < BOARD_SIZE; ++x) {
+	for (board_coord_t y = 0; y < BOARD_SIZE; ++y) {
+		for (board_coord_t x = 0; x < BOARD_SIZE; ++x) {
 			if (x != 0) {
 				std::cerr << ' ';
 			}
@@ -290,12 +289,12 @@ void printStats(Node *n) {
 	std::cerr << "PASS = " << std::setw(2) << effortMap[PASS] << std::endl;
 	std::cerr << "Best line: ";
 	Node *curMove = n;
-	for (std::size_t i = 0; i < 5; ++i) {
+	for (int i = 0; i < 5; ++i) {
 		if (!curMove->expanded) {
 			break;
 		}
 		Node *next = nullptr;
-		std::size_t maxVisits = 0;
+		int maxVisits = 0;
 		for (auto &m : curMove->nodes) {
 			if (m->visits > maxVisits) {
 				next = m.get();
@@ -305,7 +304,7 @@ void printStats(Node *n) {
 		if (next == nullptr || next->visits < 100) {
 			break;
 		}
-		std::size_t move = next->move;
+		board_offset_t move = next->move;
 		curMove = next;
 		std::cerr << moveToString(move) << ' ';
 		std::cerr << '(' << std::setw(0) << curMove->visits << ") ";
@@ -334,7 +333,7 @@ Node *selectMove(Node *n, ThreadData *td) {
 }
 
 void expandTree(Node *n, Game *g, PlayerColour col) {
-	for (std::size_t move = 0; move < RESIGN; ++move) {
+	for (board_offset_t move = 0; move < RESIGN; ++move) {
 		if (g->isIllegal(move, col)) {
 			continue;
 		}
@@ -363,20 +362,20 @@ void simulate(Game *g, Node *n, PlayerColour col, ThreadData *td) {
 	}
 }
 
-std::size_t findMove(
+board_offset_t findMove(
     Game *g, PlayerColour col, std::default_random_engine::result_type seed) {
 	auto start = std::chrono::high_resolution_clock::now();
 	Node root;
-	std::atomic<std::size_t> playouts = 0;
+	std::atomic<int> playouts = 0;
 	std::seed_seq seq{seed};
 	std::vector<std::thread> threads;
-	std::size_t cpuCount = std::thread::hardware_concurrency();
+	int cpuCount = std::thread::hardware_concurrency();
 	if (cpuCount == 0) {
 		cpuCount = 1;
 	}
 	std::vector<std::seed_seq::result_type> seeds(cpuCount);
 	seq.generate(seeds.begin(), seeds.end());
-	for (std::size_t i = 0; i < cpuCount; ++i) {
+	for (int i = 0; i < cpuCount; ++i) {
 		threads.emplace_back(
 		    [&](std::seed_seq::result_type threadSeed) {
 			    ThreadData td;
@@ -428,7 +427,6 @@ GtpCommandDef parseCommand(const std::string &inputCommand) {
 	GtpCommandDef res;
 	std::string command;
 	command.reserve(inputCommand.size());
-	bool truncateComment = false;
 	for (auto c : inputCommand) {
 		if (c == '#') {
 			break;
@@ -594,7 +592,7 @@ void setKomi(const GtpCommandDef &cd) {
 }
 void playMove(const GtpCommandDef &cd, Game *g) {
 	bool syntaxError = false;
-	std::size_t move;
+	board_offset_t move = RESIGN;
 	PlayerColour col;
 	if (cd.arguments.size() != 2) {
 		syntaxError = true;
@@ -618,8 +616,8 @@ void playMove(const GtpCommandDef &cd, Game *g) {
 		} else if (moveStr.size() != 2) {
 			syntaxError = true;
 		} else {
-			int x = moveStr[0] - 'a';
-			int y = moveStr[1] - '1';
+			board_coord_t x = moveStr[0] - 'a';
+			board_coord_t y = moveStr[1] - '1';
 			if (x >= 9) {
 				--x;
 			}
@@ -687,7 +685,6 @@ int main(int argc, char **argv) {
 	    rd());
 	HashValues::getInstance()->init(PASS);
 	Game g;
-	PlayerColour col = PlayerColour::BLACK;
 	std::string commandStr;
 	while (std::getline(std::cin, commandStr)) {
 		auto cd = parseCommand(commandStr);

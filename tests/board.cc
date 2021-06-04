@@ -22,7 +22,6 @@
 
 #include "../src/board.hpp"
 
-#include <cstddef>
 #include <utility>
 #include <iostream>
 #include <string>
@@ -33,7 +32,7 @@
 /**
  * Move description
  */
-using move_description = std::tuple<std::size_t, std::size_t, PlayerColour>;
+using move_description = std::tuple<board_coord_t, board_coord_t, PlayerColour>;
 
 namespace std {
 
@@ -101,7 +100,7 @@ ostream &operator<<(ostream &os, const vector<move_description> &v) {
  * @param v Value
  * @return Stream
  */
-ostream &operator<<(ostream &os, std::pair<std::size_t, std::size_t> v) {
+ostream &operator<<(ostream &os, std::pair<board_coord_t, board_coord_t> v) {
 	auto [black, white] = v;
 	os << "b = " << black << ", ";
 	os << "w = " << white;
@@ -120,7 +119,7 @@ struct BoardIterator {
 	using pointer = void;
 	using difference_type = int;
 
-	std::size_t i;
+	board_offset_t i;
 	const Board *board;
 
 	bool operator!=(const BoardIterator &other) {
@@ -183,10 +182,10 @@ std::string convertToString(const Board &board) {
  * @param s String
  * @return Board
  */
-Board convertFromString(std::size_t size, const std::string &s) {
+Board convertFromString(board_size_t size, const std::string &s) {
 	Board b(size);
-	for (std::size_t i = 0, y = 0; y < size; ++y) {
-		for (std::size_t x = 0; x < size; ++i, ++x) {
+	for (board_coord_t i = 0, y = 0; y < size; ++y) {
+		for (board_coord_t x = 0; x < size; ++i, ++x) {
 			switch (s[i]) {
 			case 'B':
 				b.playMove(x, y, PlayerColour::BLACK);
@@ -215,10 +214,10 @@ BOOST_FIXTURE_TEST_SUITE(board_tests, board_fixture)
  * Test data for board traverse class
  */
 const std::tuple<
-    std::size_t,  // X
-    std::size_t,  // Y
-    std::size_t,  // Offset
-    std::size_t,  // Size
+    board_coord_t,   // X
+    board_coord_t,   // Y
+    board_offset_t,  // Offset
+    board_size_t,    // Size
     std::vector<BoardTraverse::iterator::value_type>  // Answer
 > board_traverse_data[] = {
     {1, 1, 6, 5, {
@@ -499,7 +498,7 @@ BOOST_DATA_TEST_CASE(
  * Data for suicide test
  */
 const std::tuple<
-    std::size_t,       // Board size
+    board_size_t,      // Board size
     std::string,       // Position
     move_description,  // Move
     bool               // Suicide or not
@@ -597,9 +596,9 @@ BOOST_DATA_TEST_CASE(board_suicide_tests, board_suicide_test_data, size,
  * Data for board counting test
  */
 const std::tuple<
-    std::size_t,  // Board size
-    std::string,  // Board state
-    std::pair<std::size_t, std::size_t>  // Answer
+    board_size_t,  // Board size
+    std::string,   // Board state
+    std::pair<int, int>  // Answer
 > board_count_test_data[] = {
     // Empty board
     {1, " ", {0, 0}},

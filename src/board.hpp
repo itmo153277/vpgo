@@ -24,7 +24,6 @@
 #define SRC_BOARD_HPP_
 
 #include <cassert>
-#include <cstddef>
 #include <cstdint>
 #include <utility>
 #include <vector>
@@ -36,6 +35,19 @@
 #include "hash.hpp"
 
 /**
+ * Board offset type
+ */
+using board_offset_t = unsigned int;
+/**
+ * Coordinate offset type
+ */
+using board_coord_t = unsigned int;
+/**
+ * Board size type
+ */
+using board_size_t = unsigned int;
+
+/**
  * Board traverse helper
  */
 struct BoardTraverse {
@@ -45,7 +57,8 @@ struct BoardTraverse {
 	class iterator {
 	public:
 		using iterator_category = std::forward_iterator_tag;
-		using value_type = std::tuple<std::size_t, std::size_t, std::size_t>;
+		using value_type =
+		    std::tuple<board_coord_t, board_coord_t, board_offset_t>;
 		using reference = void;
 		using pointer = void;
 		using difference_type = int;
@@ -123,19 +136,19 @@ private:
 	/**
 	 * X coord
 	 */
-	std::size_t m_x;
+	board_coord_t m_x;
 	/**
 	 * Y coord
 	 */
-	std::size_t m_y;
+	board_coord_t m_y;
 	/**
 	 * Offset
 	 */
-	std::size_t m_Offset;
+	board_offset_t m_Offset;
 	/**
 	 * Size
 	 */
-	std::size_t m_Size;
+	board_size_t m_Size;
 
 	/**
 	 * Get next value
@@ -198,8 +211,8 @@ public:
 	 * @param offset Offset
 	 * @param size Size
 	 */
-	constexpr BoardTraverse(
-	    std::size_t x, std::size_t y, std::size_t offset, std::size_t size)
+	constexpr BoardTraverse(board_coord_t x, board_coord_t y,
+	    board_offset_t offset, board_size_t size)
 	    : m_x(x), m_y(y), m_Offset(offset), m_Size(size) {
 	}
 
@@ -233,17 +246,17 @@ private:
 		/**
 		 * Number of edges
 		 */
-		std::size_t edges = 0;
+		int edges = 0;
 		/**
 		 * Number of stones
 		 */
-		std::size_t stones = 0;
+		int stones = 0;
 	};
 
 	/**
 	 * Board size
 	 */
-	std::size_t m_Size;
+	board_size_t m_Size;
 	/**
 	 * Board state
 	 */
@@ -255,7 +268,7 @@ private:
 	/**
 	 * Releation between groups
 	 */
-	std::vector<std::size_t> m_GroupRelation;
+	std::vector<board_offset_t> m_GroupRelation;
 	/**
 	 * Hash
 	 */
@@ -263,7 +276,7 @@ private:
 	/**
 	 * Number of stones
 	 */
-	std::size_t m_Stones;
+	int m_Stones;
 
 	/**
 	 * Convert coords to offset
@@ -272,7 +285,7 @@ private:
 	 * @param y Y coord
 	 * @return Offset
 	 */
-	std::size_t coordsToOffset(std::size_t x, std::size_t y) const {
+	board_offset_t coordsToOffset(board_coord_t x, board_coord_t y) const {
 		return y * m_Size + x;
 	}
 	/**
@@ -281,8 +294,8 @@ private:
 	 * @param offset Offset
 	 * @return A pair of x and y coords
 	 */
-	std::pair<std::size_t, std::size_t> offsetToCoords(
-	    std::size_t offset) const {
+	std::pair<board_coord_t, board_coord_t> offsetToCoords(
+	    board_offset_t offset) const {
 		return std::make_pair(offset % m_Size, offset / m_Size);
 	}
 
@@ -292,19 +305,19 @@ private:
 	 * @param from Smaller group
 	 * @param to Larger group
 	 */
-	void mergeGroups(std::size_t from, std::size_t to);
+	void mergeGroups(board_offset_t from, board_offset_t to);
 
 	/**
 	 * Finds group location for specified stone
 	 *
 	 * @param offset Stone offset
-	 * @return std::size_t Position of the group
+	 * @return Position of the group
 	 */
-	std::size_t getGroupLocation(std::size_t offset) const {
+	board_offset_t getGroupLocation(board_offset_t offset) const {
 		assert(offset < m_Size * m_Size);
 		assert(m_State[offset] == PlayerColour::BLACK ||
 		       m_State[offset] == PlayerColour::WHITE);
-		std::size_t groupLoc = offset;
+		board_offset_t groupLoc = offset;
 		while (m_GroupRelation[groupLoc] != groupLoc) {
 			groupLoc = m_GroupRelation[groupLoc];
 		}
@@ -318,7 +331,7 @@ private:
 	 * @param x X coord
 	 * @param y Y coord
 	 */
-	void removeGroup(std::size_t offset, std::size_t x, std::size_t y);
+	void removeGroup(board_offset_t offset, board_coord_t x, board_coord_t y);
 
 public:
 	/**
@@ -330,7 +343,7 @@ public:
 	 *
 	 * @param size Board size
 	 */
-	explicit Board(std::size_t size)
+	explicit Board(board_size_t size)
 	    : m_Size(size)
 	    , m_State(size * size, PlayerColour::NONE)
 	    , m_Groups(size * size)
@@ -394,7 +407,7 @@ public:
 	 *
 	 * @return Size
 	 */
-	std::size_t getSize() const {
+	board_size_t getSize() const {
 		return m_Size;
 	}
 	/**
@@ -403,7 +416,7 @@ public:
 	 * @param offset Offset
 	 * @return Value
 	 */
-	PlayerColour getValue(std::size_t offset) const {
+	PlayerColour getValue(board_offset_t offset) const {
 		assert(offset < m_Size * m_Size);
 		return m_State[offset];
 	}
@@ -414,7 +427,7 @@ public:
 	 * @param y Y coord
 	 * @return Value
 	 */
-	PlayerColour getValue(std::size_t x, std::size_t y) const {
+	PlayerColour getValue(board_coord_t x, board_coord_t y) const {
 		return getValue(coordsToOffset(x, y));
 	}
 
@@ -424,7 +437,7 @@ public:
 	 * @param offset Location offset
 	 * @return Number of edges
 	 */
-	std::size_t getEdges(std::size_t offset) const {
+	int getEdges(board_offset_t offset) const {
 		return m_Groups[getGroupLocation(offset)].edges;
 	}
 
@@ -435,7 +448,7 @@ public:
 	 * @param y Y coord
 	 * @return Number of edges
 	 */
-	std::size_t getEdges(std::size_t x, std::size_t y) const {
+	int getEdges(board_coord_t x, board_coord_t y) const {
 		return getEdges(coordsToOffset(x, y));
 	}
 
@@ -446,14 +459,14 @@ public:
 	 * @param y Y coord
 	 * @param colour Stone colour
 	 */
-	void playMove(std::size_t x, std::size_t y, PlayerColour colour);
+	void playMove(board_coord_t x, board_coord_t y, PlayerColour colour);
 	/**
 	 * Play a move
 	 *
 	 * @param offset Offset
 	 * @param colour Stone colour
 	 */
-	void playMove(std::size_t offset, PlayerColour colour) {
+	void playMove(board_offset_t offset, PlayerColour colour) {
 		auto [x, y] = offsetToCoords(offset);
 		playMove(x, y, colour);
 	}
@@ -466,7 +479,7 @@ public:
 	 * @param colour Stone colour
 	 * @return True if suicide
 	 */
-	bool isSuicide(std::size_t x, std::size_t y, PlayerColour colour) const;
+	bool isSuicide(board_coord_t x, board_coord_t y, PlayerColour colour) const;
 	/**
 	 * Check if move is a suicide
 	 *
@@ -474,7 +487,7 @@ public:
 	 * @param colour Stone colour
 	 * @return True if suicide
 	 */
-	bool isSuicide(std::size_t offset, PlayerColour colour) const {
+	bool isSuicide(board_offset_t offset, PlayerColour colour) const {
 		auto [x, y] = offsetToCoords(offset);
 		return isSuicide(x, y, colour);
 	}
@@ -488,7 +501,7 @@ public:
 	 * @return Hash value
 	 */
 	std::uint_least64_t preComputeHash(
-	    std::size_t x, std::size_t y, PlayerColour colour) const;
+	    board_coord_t x, board_coord_t y, PlayerColour colour) const;
 	/**
 	 * Pre-computes hash
 	 *
@@ -497,7 +510,7 @@ public:
 	 * @return Hash value
 	 */
 	std::uint_least64_t preComputeHash(
-	    std::size_t offset, PlayerColour colour) const {
+	    board_offset_t offset, PlayerColour colour) const {
 		auto [x, y] = offsetToCoords(offset);
 		return preComputeHash(x, y, colour);
 	}
@@ -507,7 +520,7 @@ public:
 	 *
 	 * @return Pair {Black, White}
 	 */
-	std::pair<std::size_t, std::size_t> countPoints() const;
+	std::pair<int, int> countPoints() const;
 
 	/**
 	 * Get hash
@@ -520,10 +533,10 @@ public:
 
 	/**
 	 * Get the number of stones
-	 * 
+	 *
 	 * @return Number of stones
 	 */
-	std::size_t getNumberOfStones() const {
+	int getNumberOfStones() const {
 		return m_Stones;
 	}
 };
