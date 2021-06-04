@@ -251,6 +251,10 @@ private:
 		 * Number of stones
 		 */
 		int stones = 0;
+		/**
+		 * Group hash
+		 */
+		std::uint_least64_t hash;
 	};
 
 	/**

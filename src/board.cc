@@ -22,8 +22,6 @@
 
 #include "board.hpp"
 #include <cassert>
-#include <unordered_set>
-#include <unordered_map>
 #include <queue>
 
 /**
@@ -36,6 +34,7 @@ void Board::mergeGroups(board_offset_t from, board_offset_t to) {
 	m_GroupRelation[from] = to;
 	m_Groups[to].edges += m_Groups[from].edges;
 	m_Groups[to].stones += m_Groups[from].stones;
+	m_Groups[to].hash ^= m_Groups[from].hash;
 }
 
 /**
@@ -51,14 +50,15 @@ void Board::playMove(board_coord_t x, board_coord_t y, PlayerColour colour) {
 	assert(colour == PlayerColour::BLACK || colour == PlayerColour::WHITE);
 	const board_offset_t offset = coordsToOffset(x, y);
 	assert(m_State[offset] == PlayerColour::NONE);
-	m_Hash ^= HashValues::getInstance()->getValue(offset, colour);
 	m_State[offset] = colour;
-	m_Groups[offset] = {0, 1};
+	m_Groups[offset] = {
+	    0, 1, HashValues::getInstance()->getValue(offset, colour)};
+	m_Hash ^= m_Groups[offset].hash;
 	m_GroupRelation[offset] = offset;
 	++m_Stones;
 	board_offset_t maxGroup = offset;
-	std::unordered_set<board_offset_t> neighbours;
-	neighbours.insert(offset);
+	board_offset_t neighbours[5] = {offset};
+	int totalNeighbours = 1;
 	for (auto [tx, ty, toffset] : BoardTraverse(x, y, offset, m_Size)) {
 		if (m_State[toffset] == PlayerColour::NONE) {
 			m_Groups[offset].edges++;
@@ -66,7 +66,13 @@ void Board::playMove(board_coord_t x, board_coord_t y, PlayerColour colour) {
 			const board_offset_t group = getGroupLocation(toffset);
 			m_Groups[group].edges--;
 			if (m_State[group] == colour) {
-				neighbours.insert(group);
+				for (int i = 1; i < totalNeighbours; ++i) {
+					if (neighbours[i] == group) {
+						goto foundNeighbour;
+					}
+				}
+				neighbours[totalNeighbours++] = group;
+			foundNeighbour:
 				if (m_Groups[group].stones > m_Groups[maxGroup].stones) {
 					maxGroup = group;
 				}
@@ -75,9 +81,9 @@ void Board::playMove(board_coord_t x, board_coord_t y, PlayerColour colour) {
 			}
 		}
 	}
-	for (auto group : neighbours) {
-		if (group != maxGroup) {
-			mergeGroups(group, maxGroup);
+	for (int i = 0; i < totalNeighbours; ++i) {
+		if (neighbours[i] != maxGroup) {
+			mergeGroups(neighbours[i], maxGroup);
 		}
 	}
 }
@@ -124,8 +130,10 @@ bool Board::isSuicide(
     board_coord_t x, board_coord_t y, PlayerColour colour) const {
 	assert(x < m_Size);
 	assert(y < m_Size);
-	std::unordered_map<board_offset_t, int> sameNeighbours;
-	std::unordered_map<board_offset_t, int> oppositeNeighbours;
+	std::pair<board_offset_t, int> sameNeighbours[4];
+	int totalSameNeighbours = 0;
+	std::pair<board_offset_t, int> oppositeNeighbours[4];
+	int totalOppositeNeighbours = 0;
 	for (auto [tx, ty, toffset] :
 	    BoardTraverse(x, y, coordsToOffset(x, y), m_Size)) {
 		if (m_State[toffset] == PlayerColour::NONE) {
@@ -133,20 +141,38 @@ bool Board::isSuicide(
 		}
 		const board_offset_t group = getGroupLocation(toffset);
 		if (m_State[group] == colour) {
-			auto neighbour =
-			    sameNeighbours.insert({group, m_Groups[group].edges}).first;
-			--neighbour->second;
+			int neighbour = -1;
+			for (int i = 0; i < totalSameNeighbours; ++i) {
+				if (sameNeighbours[i].first == group) {
+					neighbour = i;
+					break;
+				}
+			}
+			if (neighbour == -1) {
+				neighbour = totalSameNeighbours++;
+				sameNeighbours[neighbour] = {group, m_Groups[group].edges};
+			}
+			--sameNeighbours[neighbour].second;
 		} else {
-			auto neighbour =
-			    oppositeNeighbours.insert({group, m_Groups[group].edges}).first;
-			--neighbour->second;
-			if (neighbour->second == 0) {
+			int neighbour = -1;
+			for (int i = 0; i < totalOppositeNeighbours; ++i) {
+				if (oppositeNeighbours[i].first == group) {
+					neighbour = i;
+					break;
+				}
+			}
+			if (neighbour == -1) {
+				neighbour = totalOppositeNeighbours++;
+				oppositeNeighbours[neighbour] = {group, m_Groups[group].edges};
+			}
+			--oppositeNeighbours[neighbour].second;
+			if (oppositeNeighbours[neighbour].second == 0) {
 				return false;
 			}
 		}
 	}
-	for (auto [group, edges] : sameNeighbours) {
-		if (edges > 0) {
+	for (int i = 0; i < totalSameNeighbours; ++i) {
+		if (sameNeighbours[i].second > 0) {
 			return false;
 		}
 	}
@@ -229,37 +255,28 @@ std::uint_least64_t Board::preComputeHash(
 	board_offset_t offset = coordsToOffset(x, y);
 	std::uint_least64_t currentHash =
 	    m_Hash ^ HashValues::getInstance()->getValue(offset, colour);
-	std::unordered_map<board_offset_t, int> neighbours;
-	std::queue<std::tuple<board_coord_t, board_coord_t, board_offset_t>>
-	    stonesToRemove;
-	std::unordered_set<board_offset_t> removedStones;
+	std::pair<board_offset_t, int> neighbours[4];
+	int totalNeighbours = 0;
 	for (auto [tx, ty, toffset] :
 	    BoardTraverse(x, y, coordsToOffset(x, y), m_Size)) {
 		if (m_State[toffset] != colour.invert()) {
 			continue;
 		}
 		const board_offset_t group = getGroupLocation(toffset);
-		auto neighbour =
-		    neighbours.insert({group, m_Groups[group].edges}).first;
-		--neighbour->second;
-		if (neighbour->second == 0) {
-			stonesToRemove.push({tx, ty, toffset});
-		}
-	}
-	while (stonesToRemove.size() > 0) {
-		auto [qx, qy, qoffset] = stonesToRemove.front();
-		stonesToRemove.pop();
-		bool skip = !removedStones.insert(qoffset).second;
-		if (skip) {
-			continue;
-		}
-		currentHash ^=
-		    HashValues::getInstance()->getValue(qoffset, colour.invert());
-		for (auto [tx, ty, toffset] : BoardTraverse(qx, qy, qoffset, m_Size)) {
-			if (m_State[toffset] != colour.invert()) {
-				continue;
+		int neighbour = -1;
+		for (int i = 0; i < totalNeighbours; ++i) {
+			if (neighbours[i].first == group) {
+				neighbour = i;
+				break;
 			}
-			stonesToRemove.push({tx, ty, toffset});
+		}
+		if (neighbour == -1) {
+			neighbour = totalNeighbours++;
+			neighbours[neighbour] = {group, m_Groups[group].edges};
+		}
+		--neighbours[neighbour].second;
+		if (neighbours[neighbour].second == 0) {
+			currentHash ^= m_Groups[group].hash;
 		}
 	}
 	return currentHash;
