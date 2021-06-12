@@ -90,7 +90,7 @@ public:
 		}
 	}
 	void test_unit_finish(
-	    std::ostream &os, test_unit const &tu, unsigned long elapsed) {
+	    std::ostream &os, test_unit const &tu, unsigned long) {
 		if (tu.p_type == TUT_CASE) {
 			if (ng) {
 				os << "not ";

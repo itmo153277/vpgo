@@ -162,14 +162,17 @@ private:
 			if (m_x > 0) {
 				return 0;
 			}
+			[[fallthrough]];
 		case 0:
 			if (m_y > 0) {
 				return 1;
 			}
+			[[fallthrough]];
 		case 1:
 			if (m_x < m_Size - 1) {
 				return 2;
 			}
+			[[fallthrough]];
 		case 2:
 			if (m_y < m_Size - 1) {
 				return 3;

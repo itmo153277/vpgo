@@ -616,13 +616,14 @@ void playMove(const GtpCommandDef &cd, Game *g) {
 		} else if (moveStr.size() != 2) {
 			syntaxError = true;
 		} else {
-			board_coord_t x = moveStr[0] - 'a';
-			board_coord_t y = moveStr[1] - '1';
+			int x = moveStr[0] - 'a';
+			int y = moveStr[1] - '1';
 			if (x >= 9) {
 				--x;
 			}
 			y = BOARD_SIZE - y - 1;
-			if (x < 0 || x > BOARD_SIZE || y < 0 || y > BOARD_SIZE) {
+			if (x < 0 || static_cast<board_coord_t>(x) > BOARD_SIZE || y < 0 ||
+			    static_cast<board_coord_t>(y) > BOARD_SIZE) {
 				syntaxError = true;
 			} else {
 				move = y * BOARD_SIZE + x;
@@ -677,7 +678,7 @@ void genMove(const GtpCommandDef &cd, Game *g,
  * @param argv Array of command line arguments
  * @return Exit code
  */
-int main(int argc, char **argv) {
+int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
 	std::random_device rd;
 	std::default_random_engine gen;
 	gen.seed(
