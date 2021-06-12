@@ -402,7 +402,7 @@ board_offset_t findMove(
 }
 
 struct GtpCommandDef {
-	bool hasCommandId;
+	bool hasCommandId = false;
 	int commandId;
 	std::string commandName;
 	std::vector<std::string> arguments;
@@ -447,7 +447,6 @@ GtpCommandDef parseCommand(const std::string &inputCommand) {
 	if (ss >> res.commandId) {
 		res.hasCommandId = true;
 	} else {
-		res.hasCommandId = false;
 		ss.clear();
 	}
 	ss >> res.commandName;
