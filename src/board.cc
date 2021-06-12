@@ -22,7 +22,6 @@
 
 #include "board.hpp"
 #include <cassert>
-#include <queue>
 
 /**
  * Merge two groups into one
@@ -186,7 +185,8 @@ bool Board::isSuicide(
  */
 std::pair<int, int> Board::countPoints() const {
 	std::vector<bool> visited(m_State.size());
-	std::vector<bool> traversed(m_State.size());
+	std::vector<std::tuple<board_coord_t, board_coord_t, board_offset_t>> queue(
+	    m_State.size());
 	int black = 0;
 	int white = 0;
 	board_offset_t offset = 0;
@@ -203,30 +203,24 @@ std::pair<int, int> Board::countPoints() const {
 			} else {
 				PlayerColour colour = PlayerColour::NONE;
 				int count = 0;
-				std::queue<
-				    std::tuple<board_coord_t, board_coord_t, board_offset_t>>
-				    queue;
-				queue.push({x, y, offset});
-				while (queue.size() > 0) {
-					auto [qx, qy, qoffset] = queue.front();
-					queue.pop();
-					if (traversed[qoffset]) {
-						continue;
-					}
-					if (m_State[qoffset] == PlayerColour::NONE) {
-						++count;
-						for (auto [tx, ty, toffset] :
-						    BoardTraverse(qx, qy, qoffset, m_Size)) {
-							queue.push({tx, ty, toffset});
+				int queueSize = 1;
+				queue[0] = {x, y, offset};
+				while (queueSize > 0) {
+					auto [qx, qy, qoffset] = queue[0];
+					queue[0] = queue[--queueSize];
+					++count;
+					for (auto [tx, ty, toffset] :
+					    BoardTraverse(qx, qy, qoffset, m_Size)) {
+						if (m_State[toffset] == PlayerColour::NONE) {
+							if (!visited[toffset]) {
+								visited[toffset] = true;
+								queue[queueSize++] = {tx, ty, toffset};
+							}
+						} else if (colour == PlayerColour::NONE) {
+							colour = m_State[toffset];
+						} else if (colour != m_State[toffset]) {
+							colour = PlayerColour::NEUTRAL;
 						}
-						visited[qoffset] = true;
-						traversed[qoffset] = true;
-						continue;
-					}
-					if (colour == PlayerColour::NONE) {
-						colour = m_State[qoffset];
-					} else if (colour != m_State[qoffset]) {
-						colour = PlayerColour::NEUTRAL;
 					}
 				}
 				if (colour == PlayerColour::BLACK) {
