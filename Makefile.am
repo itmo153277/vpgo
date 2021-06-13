@@ -8,10 +8,12 @@ noinst_HEADERS = \
 	src/vpgo.hpp \
 	src/board.hpp \
 	src/colour.hpp \
+	src/game.hpp \
 	src/hash.hpp
 VPGO_UNITTESTS = \
 	tests/board.cc \
 	tests/colour.cc \
+	tests/game.cc \
 	tests/hash.cc
 VPGO_M4 = \
 	m4/deps.m4 \

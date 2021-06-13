@@ -145,7 +145,7 @@ struct BoardIterator {
  * @param board Board
  * @return Vector of values
  */
-std::vector<PlayerColour> convertToVector(const Board &board) {
+std::vector<PlayerColour> boardToVec(const Board &board) {
 	std::vector<PlayerColour> data(BoardIterator({0, &board}),
 	    BoardIterator({board.getSize() * board.getSize(), &board}));
 
@@ -158,7 +158,7 @@ std::vector<PlayerColour> convertToVector(const Board &board) {
  * @param board Board
  * @return String
  */
-std::string convertToString(const Board &board) {
+std::string boardToStr(const Board &board) {
 	std::vector<char> data;
 	std::transform(BoardIterator({0, &board}),
 	    BoardIterator({board.getSize() * board.getSize(), &board}),
@@ -182,9 +182,10 @@ std::string convertToString(const Board &board) {
  * @param s String
  * @return Board
  */
-Board convertFromString(board_size_t size, const std::string &s) {
+Board strToBoard(board_size_t size, const std::string &s) {
 	Board b(size);
-	for (board_coord_t i = 0, y = 0; y < size; ++y) {
+	int i = 0;
+	for (board_coord_t y = 0; y < size; ++y) {
 		for (board_coord_t x = 0; x < size; ++i, ++x) {
 			switch (s[i]) {
 			case 'B':
@@ -278,62 +279,62 @@ const char testBoard[] =
     "WW ";
 
 BOOST_AUTO_TEST_CASE(board_position) {
-	Board b = convertFromString(3, testBoard);
-	auto b_string = convertToString(b);
+	Board b = strToBoard(3, testBoard);
+	auto b_string = boardToStr(b);
 	BOOST_TEST(b_string == testBoard);
 }
 
 BOOST_AUTO_TEST_CASE(board_copy_ctor) {
-	Board b = convertFromString(3, testBoard);
+	Board b = strToBoard(3, testBoard);
 	Board copy = b;
-	auto b_data = convertToVector(b);
-	auto copy_data = convertToVector(copy);
+	auto b_data = boardToVec(b);
+	auto copy_data = boardToVec(copy);
 	BOOST_TEST(b_data == copy_data, boost::test_tools::per_element());
 	b.playMove(0, 0, PlayerColour::BLACK);
-	auto copy_str = convertToString(copy);
+	auto copy_str = boardToStr(copy);
 	BOOST_TEST(copy_str == testBoard);
 }
 
 BOOST_AUTO_TEST_CASE(board_assign_ctor) {
-	Board b = convertFromString(3, testBoard);
+	Board b = strToBoard(3, testBoard);
 	Board copy(3);
 	copy = b;
-	auto b_data = convertToVector(b);
-	auto copy_data = convertToVector(copy);
+	auto b_data = boardToVec(b);
+	auto copy_data = boardToVec(copy);
 	BOOST_TEST(b_data == copy_data, boost::test_tools::per_element());
 	b.playMove(0, 0, PlayerColour::BLACK);
-	auto copy_str = convertToString(copy);
+	auto copy_str = boardToStr(copy);
 	BOOST_TEST(copy_str == testBoard);
 }
 
 BOOST_AUTO_TEST_CASE(board_move_ctor) {
-	Board b = convertFromString(3, testBoard);
+	Board b = strToBoard(3, testBoard);
 	Board temp = b;
 	Board copy = std::move(temp);
-	auto b_data = convertToVector(b);
-	auto copy_data = convertToVector(copy);
+	auto b_data = boardToVec(b);
+	auto copy_data = boardToVec(copy);
 	BOOST_TEST(b_data == copy_data, boost::test_tools::per_element());
 	b.playMove(0, 0, PlayerColour::BLACK);
-	auto copy_str = convertToString(copy);
+	auto copy_str = boardToStr(copy);
 	BOOST_TEST(copy_str == testBoard);
 }
 
 BOOST_AUTO_TEST_CASE(board_move_assign_ctor) {
-	Board b = convertFromString(3, testBoard);
+	Board b = strToBoard(3, testBoard);
 	Board temp = b;
 	Board copy(3);
 	copy = std::move(temp);
-	auto b_data = convertToVector(b);
-	auto copy_data = convertToVector(copy);
+	auto b_data = boardToVec(b);
+	auto copy_data = boardToVec(copy);
 	BOOST_TEST(b_data == copy_data, boost::test_tools::per_element());
 	b.playMove(0, 0, PlayerColour::BLACK);
-	auto copy_str = convertToString(copy);
+	auto copy_str = boardToStr(copy);
 	BOOST_TEST(copy_str == testBoard);
 }
 
 BOOST_AUTO_TEST_CASE(board_hash_check) {
 	HashValues::getInstance()->seed(0xEAEAEAEA);
-	Board b = convertFromString(3, testBoard);
+	Board b = strToBoard(3, testBoard);
 	Board copy = b;
 	BOOST_TEST(b.getHash() == copy.getHash());
 	b.playMove(0, 0, PlayerColour::BLACK);
@@ -346,7 +347,7 @@ BOOST_AUTO_TEST_CASE(board_precompute_hash_check) {
 	    " WW"
 	    " BW"
 	    "BWW";
-	Board b = convertFromString(3, testPreHashBoard);
+	Board b = strToBoard(3, testPreHashBoard);
 	auto preHash = b.preComputeHash(0, 0, PlayerColour::BLACK);
 	b.playMove(0, 0, PlayerColour::BLACK);
 	BOOST_TEST(b.getHash() == preHash);
@@ -362,7 +363,7 @@ BOOST_AUTO_TEST_CASE(board_eq_check) {
 	BOOST_TEST(result);
 	result = b2 == b3;
 	BOOST_TEST(result);
-	b1 = convertFromString(3, testBoard);
+	b1 = strToBoard(3, testBoard);
 	b2 = b1;
 	result = b1 == b2;
 	BOOST_TEST(result);
@@ -485,11 +486,11 @@ const std::tuple<
 
 BOOST_DATA_TEST_CASE(
     board_play_tests, board_play_test_data, initial_state, moves, answer) {
-	Board b = convertFromString(5, initial_state);
+	Board b = strToBoard(5, initial_state);
 	for (auto [x, y, colour] : moves) {
 		b.playMove(x, y, colour);
 	}
-	auto b_string = convertToString(b);
+	auto b_string = boardToStr(b);
 	BOOST_TEST(b_string == answer);
 }
 
@@ -585,7 +586,7 @@ const std::tuple<
 
 BOOST_DATA_TEST_CASE(board_suicide_tests, board_suicide_test_data, size,
     position, move, answer) {
-	Board b = convertFromString(size, position);
+	Board b = strToBoard(size, position);
 	auto [x, y, colour] = move;
 	bool result = b.isSuicide(x, y, colour);
 	BOOST_CHECK(result == answer);
@@ -641,7 +642,7 @@ const std::tuple<
 
 BOOST_DATA_TEST_CASE(
     board_count_tests, board_count_test_data, size, position, answer) {
-	Board b = convertFromString(size, position);
+	Board b = strToBoard(size, position);
 	auto result = b.countPoints();
 	BOOST_CHECK(result == answer);
 }

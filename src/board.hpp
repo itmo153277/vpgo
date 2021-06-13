@@ -257,7 +257,7 @@ private:
 		/**
 		 * Group hash
 		 */
-		std::uint_least64_t hash;
+		hash_t hash;
 	};
 
 	/**
@@ -279,7 +279,7 @@ private:
 	/**
 	 * Hash
 	 */
-	std::uint_least64_t m_Hash;
+	hash_t m_Hash;
 	/**
 	 * Number of stones
 	 */
@@ -351,45 +351,14 @@ public:
 	 * @param size Board size
 	 */
 	explicit Board(board_size_t size)
-	    : m_Size(size)
+	    : m_Size{size}
 	    , m_State(size * size, PlayerColour::NONE)
 	    , m_Groups(size * size)
 	    , m_GroupRelation(size * size)
-	    , m_Hash(HashValues::getInstance()->getInitialValue())
-	    , m_Stones(0) {
+	    , m_Hash{HashValues::getInstance()->getInitialValue()}
+	    , m_Stones{0} {
 	}
-	/**
-	 * Copy ctor
-	 *
-	 * @param s Source
-	 */
-	Board(const Board &s) = default;
-	/**
-	 * Move ctor
-	 *
-	 * @param s Source
-	 */
-	Board(Board &&s) noexcept = default;
 
-	/**
-	 * Default dtor
-	 */
-	~Board() = default;
-
-	/**
-	 * Copy assignment
-	 *
-	 * @param s Source
-	 * @return Self
-	 */
-	Board &operator=(const Board &s) = default;
-	/**
-	 * Move assignment
-	 *
-	 * @param s Source
-	 * @return Self
-	 */
-	Board &operator=(Board &&s) noexcept = default;
 	/**
 	 * Equality comparison
 	 *
@@ -507,7 +476,7 @@ public:
 	 * @param colour Stone colour
 	 * @return Hash value
 	 */
-	std::uint_least64_t preComputeHash(
+	hash_t preComputeHash(
 	    board_coord_t x, board_coord_t y, PlayerColour colour) const;
 	/**
 	 * Pre-computes hash
@@ -516,8 +485,7 @@ public:
 	 * @param colour Stone colour
 	 * @return Hash value
 	 */
-	std::uint_least64_t preComputeHash(
-	    board_offset_t offset, PlayerColour colour) const {
+	hash_t preComputeHash(board_offset_t offset, PlayerColour colour) const {
 		auto [x, y] = offsetToCoords(offset);
 		return preComputeHash(x, y, colour);
 	}
@@ -534,7 +502,7 @@ public:
 	 *
 	 * @return Hash
 	 */
-	std::uint_least64_t getHash() const {
+	hash_t getHash() const {
 		return m_Hash;
 	}
 

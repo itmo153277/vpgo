@@ -49,7 +49,7 @@ struct Game {
 	Board b{BOARD_SIZE};
 	PlayerColour winner = PlayerColour::NONE;
 	bool lastMoveWasPass = false;
-	std::unordered_set<std::uint_least64_t> hashes = {
+	std::unordered_set<hash_t> hashes = {
 	    HashValues::getInstance()->getInitialValue()};
 
 	bool isIllegal(board_offset_t offset, PlayerColour col) const {

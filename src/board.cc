@@ -242,12 +242,12 @@ std::pair<int, int> Board::countPoints() const {
  * @param colour Stone colour
  * @return Hash value
  */
-std::uint_least64_t Board::preComputeHash(
+hash_t Board::preComputeHash(
     board_coord_t x, board_coord_t y, PlayerColour colour) const {
 	assert(x < m_Size);
 	assert(y < m_Size);
 	board_offset_t offset = coordsToOffset(x, y);
-	std::uint_least64_t currentHash =
+	hash_t currentHash =
 	    m_Hash ^ HashValues::getInstance()->getValue(offset, colour);
 	std::pair<board_offset_t, int> neighbours[4];
 	int totalNeighbours = 0;

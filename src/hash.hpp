@@ -32,6 +32,11 @@
 #include "colour.hpp"
 
 /**
+ * Hash type
+ */
+using hash_t = std::uint_fast64_t;
+
+/**
  * Hash values class
  */
 struct HashValues {
@@ -65,8 +70,7 @@ struct HashValues {
 	 * @param colour Player colour
 	 * @return Hash value
 	 */
-	std::uint_least64_t getValue(
-	    std::size_t offset, PlayerColour colour) const {
+	hash_t getValue(std::size_t offset, PlayerColour colour) const {
 		assert(offset < m_Size);
 		switch (colour) {
 		case PlayerColour::BLACK:
@@ -83,7 +87,7 @@ struct HashValues {
 	 *
 	 * @return Initial hash value
 	 */
-	std::uint_least64_t getInitialValue() const {
+	hash_t getInitialValue() const {
 		return m_InitialValue;
 	}
 
@@ -91,11 +95,11 @@ private:
 	/**
 	 * Move hash values
 	 */
-	std::vector<std::uint_least64_t> m_Values;
+	std::vector<hash_t> m_Values;
 	/**
 	 * Initial hash value
 	 */
-	std::uint_least64_t m_InitialValue;
+	hash_t m_InitialValue;
 	/**
 	 * Current size
 	 */
@@ -107,16 +111,14 @@ private:
 	/**
 	 * Distribution
 	 */
-	std::uniform_int_distribution<unsigned long long  // NOLINT(runtime/int)
-	    >
-	    m_Distribution{0, UINT64_MAX};
+	std::uniform_int_distribution<hash_t> m_Distribution{0, UINT64_MAX};
 
 	/**
 	 * Generate random 64-bit number
 	 *
 	 * @return Random number
 	 */
-	std::uint_least64_t generateRandomNumber() {
+	hash_t generateRandomNumber() {
 		return m_Distribution(m_RandomEngine);
 	}
 
