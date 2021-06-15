@@ -176,6 +176,7 @@ struct ThreadData {
 	std::default_random_engine gen;
 	std::vector<board_offset_t> moves = std::vector<board_offset_t>(RESIGN);
 	std::uniform_int_distribution<board_offset_t> distrDefault{0, PASS};
+	std::size_t burned = 0;
 };
 
 PlayerColour playout(Game *g, PlayerColour toMove, ThreadData *td) {
@@ -344,15 +345,22 @@ void expandTree(Node *n, Game *g, PlayerColour col) {
 
 void simulate(Game *g, Node *n, PlayerColour col, ThreadData *td) {
 	if (g->winner == PlayerColour::NONE) {
-		if (n->explored.exchange(true) && !n->expanded &&
-		    !n->expanding.exchange(true)) {
-			expandTree(n, g, col);
+		bool burn = false;
+		if (n->explored.exchange(true) && !n->expanded) {
+			if (!n->expanding.exchange(true)) {
+				expandTree(n, g, col);
+			} else {
+				burn = true;
+			}
 		}
 		if (n->expanded) {
 			auto child = selectMove(n, td);
 			g->playMove(child->move, col);
 			simulate(g, child, col.invert(), td);
 		} else {
+			if (burn) {
+				++td->burned;
+			}
 			playout(g, col, td);
 		}
 	}
@@ -375,6 +383,7 @@ board_offset_t findMove(
 	}
 	std::vector<std::seed_seq::result_type> seeds(cpuCount);
 	seq.generate(seeds.begin(), seeds.end());
+	std::atomic<std::size_t> burned = 0;
 	for (int i = 0; i < cpuCount; ++i) {
 		threads.emplace_back(
 		    [&](std::seed_seq::result_type threadSeed) {
@@ -385,6 +394,7 @@ board_offset_t findMove(
 				    simulate(&clone, &root, col, &td);
 				    std::this_thread::yield();
 			    }
+			    burned += td.burned;
 		    },
 		    seeds[i]);
 	}
@@ -392,6 +402,7 @@ board_offset_t findMove(
 		t.join();
 	}
 	printStats(&root);
+	std::cerr << "Burned: " << burned.load() << std::endl;
 	std::cerr << "Passed time: "
 	          << std::chrono::duration_cast<std::chrono::milliseconds>(
 	                 std::chrono::high_resolution_clock::now() - start)
