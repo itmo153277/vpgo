@@ -21,6 +21,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <cstddef>
 #include <cstdint>
 #include <cmath>
 #include <cctype>
@@ -175,67 +176,54 @@ struct Node {
 struct ThreadData {
 	std::default_random_engine gen;
 	std::vector<board_offset_t> moves = std::vector<board_offset_t>(RESIGN);
-	std::uniform_int_distribution<board_offset_t> distrDefault{0, PASS};
+	std::uniform_int_distribution<std::size_t> distr;
 	std::size_t burned = 0;
+
+	ThreadData() {
+		for (board_offset_t i = 0; i < RESIGN; ++i) {
+			moves[i] = i;
+		}
+	}
 };
 
 PlayerColour playout(Game *g, PlayerColour toMove, ThreadData *td) {
 	PlayerColour col = toMove;
-	int delay = PASS * 2 - g->b.getNumberOfStones();
-	bool ignorePass = false;
 	while (g->winner == PlayerColour::NONE) {
-		board_offset_t move = td->distrDefault(td->gen);
-		if (g->isIllegal(move, col) ||
-		    (move == PASS && (ignorePass || g->countPoints() != col))) {
-			if (delay > 0) {
-				--delay;
-				if (move == PASS) {
-					ignorePass = true;
-				}
-				continue;
-			}
-			int possibleMoves = 0;
-			for (board_offset_t i = 0; i < RESIGN; ++i) {
-				if ((i < PASS && (g->b.getValue(i) != PlayerColour::NONE ||
-				                     g->b.isSuicide(i, col))) ||
-				    (move == PASS && i == PASS)) {
-					continue;
-				}
-				td->moves[possibleMoves] = i;
-				++possibleMoves;
-			}
+		std::size_t possibleMoves = td->moves.size();
+		board_offset_t move = RESIGN;
+		for (;;) {
 			if (possibleMoves == 0) {
 				move = RESIGN;
+				break;
+			}
+			std::size_t idx;
+			if (possibleMoves == 1) {
+				idx = 0;
 			} else {
-				for (;;) {
-					board_offset_t moveIndex;
-					if (possibleMoves > 1) {
-						std::uniform_int_distribution<unsigned int> distr(
-						    0, possibleMoves - 1);
-						moveIndex = distr(td->gen);
-					} else {
-						moveIndex = 0;
-					}
-					move = td->moves[moveIndex];
-					if (g->isIllegal(move, col) ||
-					    (move == PASS &&
-					        (ignorePass || g->countPoints() != col))) {
-						--possibleMoves;
-						if (possibleMoves == 0) {
-							move = RESIGN;
-							break;
-						}
-						td->moves[moveIndex] = td->moves[possibleMoves];
-						continue;
-					}
-					break;
+				decltype(td->distr)::param_type param(0, possibleMoves - 1);
+				td->distr.param(param);
+				idx = td->distr(td->gen);
+			}
+			board_offset_t newMove = td->moves[idx];
+			bool accept = false;
+			if (newMove == PASS) {
+				if (g->countPoints() == col) {
+					accept = true;
 				}
+			} else {
+				accept = !g->isIllegal(newMove, col);
+			}
+			if (accept) {
+				move = newMove;
+				break;
+			} else {
+				--possibleMoves;
+				td->moves[idx] = td->moves[possibleMoves];
+				td->moves[possibleMoves] = newMove;
 			}
 		}
 		g->playMove(move, col);
 		col = col.invert();
-		delay = PASS * 2 - g->b.getNumberOfStones();
-		ignorePass = false;
 	}
 	return g->winner;
 }
