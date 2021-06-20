@@ -211,7 +211,8 @@ PlayerColour playout(Game *g, PlayerColour toMove, ThreadData *td) {
 					accept = true;
 				}
 			} else {
-				accept = !g->isIllegal(newMove, col);
+				accept = !g->isIllegal(newMove, col) &&
+				         !g->b.isEyeLike(newMove, col);
 			}
 			if (accept) {
 				move = newMove;

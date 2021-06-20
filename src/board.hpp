@@ -468,6 +468,13 @@ public:
 		return isSuicide(x, y, colour);
 	}
 
+	bool isEyeLike(board_coord_t x, board_coord_t y, PlayerColour colour) const;
+
+	bool isEyeLike(board_offset_t offset, PlayerColour colour) const {
+		auto [x, y] = offsetToCoords(offset);
+		return isEyeLike(x, y, colour);
+	}
+
 	/**
 	 * Pre-computes hash
 	 *
