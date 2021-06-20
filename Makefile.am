@@ -3,12 +3,14 @@ AUTOMAKE_OPTIONS = subdir-objects
 
 VPGO_MAIN = \
 	src/board.cc \
+	src/pattern.cc \
 	src/hash.cc
 noinst_HEADERS = \
 	src/vpgo.hpp \
 	src/board.hpp \
 	src/colour.hpp \
 	src/game.hpp \
+	src/pattern.hpp \
 	src/hash.hpp
 VPGO_UNITTESTS = \
 	tests/board.cc \
