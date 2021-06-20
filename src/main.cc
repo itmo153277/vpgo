@@ -42,7 +42,7 @@
 #include "src/board.hpp"
 
 const board_size_t BOARD_SIZE = 9;
-const int NUM_SIM = 500000;
+const int NUM_SIM = 1000000;
 const board_offset_t PASS = BOARD_SIZE * BOARD_SIZE;
 const board_offset_t RESIGN = PASS + 1;
 
@@ -102,7 +102,7 @@ struct Game {
 	}
 	PlayerColour countPoints() {
 		auto [black, white] = b.countPoints();
-		if (black > white) {
+		if (black > white + 7) {
 			return PlayerColour::BLACK;
 		} else {
 			return PlayerColour::WHITE;
