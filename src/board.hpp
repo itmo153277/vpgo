@@ -286,27 +286,6 @@ private:
 	int m_Stones;
 
 	/**
-	 * Convert coords to offset
-	 *
-	 * @param x X coord
-	 * @param y Y coord
-	 * @return Offset
-	 */
-	board_offset_t coordsToOffset(board_coord_t x, board_coord_t y) const {
-		return y * m_Size + x;
-	}
-	/**
-	 * Convert offset to coords
-	 *
-	 * @param offset Offset
-	 * @return A pair of x and y coords
-	 */
-	std::pair<board_coord_t, board_coord_t> offsetToCoords(
-	    board_offset_t offset) const {
-		return std::make_pair(offset % m_Size, offset / m_Size);
-	}
-
-	/**
 	 * Merge two groups into one
 	 *
 	 * @param from Smaller group
@@ -520,6 +499,27 @@ public:
 	 */
 	int getNumberOfStones() const {
 		return m_Stones;
+	}
+
+	/**
+	 * Convert coords to offset
+	 *
+	 * @param x X coord
+	 * @param y Y coord
+	 * @return Offset
+	 */
+	board_offset_t coordsToOffset(board_coord_t x, board_coord_t y) const {
+		return y * m_Size + x;
+	}
+	/**
+	 * Convert offset to coords
+	 *
+	 * @param offset Offset
+	 * @return A pair of x and y coords
+	 */
+	std::pair<board_coord_t, board_coord_t> offsetToCoords(
+	    board_offset_t offset) const {
+		return std::make_pair(offset % m_Size, offset / m_Size);
 	}
 };
 

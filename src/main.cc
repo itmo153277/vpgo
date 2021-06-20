@@ -23,6 +23,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <cstdlib>
 #include <cmath>
 #include <cctype>
 #include <unordered_set>
@@ -37,14 +38,19 @@
 #include <string>
 #include <sstream>
 #include <algorithm>
-#include "src/vpgo.hpp"
-#include "src/hash.hpp"
-#include "src/board.hpp"
+#include "vpgo.hpp"
+#include "hash.hpp"
+#include "board.hpp"
+#include "pattern.hpp"
 
 const board_size_t BOARD_SIZE = 9;
-const int NUM_SIM = 1000000;
+const int NUM_SIM = 500000;
 const board_offset_t PASS = BOARD_SIZE * BOARD_SIZE;
 const board_offset_t RESIGN = PASS + 1;
+
+float simpleRand() {
+	return static_cast<float>(std::rand()) / static_cast<float>(RAND_MAX);
+}
 
 struct Game {
 	Board b{BOARD_SIZE};
@@ -186,44 +192,72 @@ struct ThreadData {
 	}
 };
 
-PlayerColour playout(Game *g, PlayerColour toMove, ThreadData *td) {
+PlayerColour playout(
+    Game *g, PlayerColour toMove, ThreadData *td, board_offset_t lastMove) {
 	PlayerColour col = toMove;
 	while (g->winner == PlayerColour::NONE) {
 		std::size_t possibleMoves = td->moves.size();
 		board_offset_t move = RESIGN;
-		for (;;) {
-			if (possibleMoves == 0) {
-				move = RESIGN;
-				break;
-			}
-			std::size_t idx;
-			if (possibleMoves == 1) {
-				idx = 0;
-			} else {
-				decltype(td->distr)::param_type param(0, possibleMoves - 1);
-				td->distr.param(param);
-				idx = td->distr(td->gen);
-			}
-			board_offset_t newMove = td->moves[idx];
-			bool accept = false;
-			if (newMove == PASS) {
-				if (g->countPoints() == col) {
-					accept = true;
+
+		if (lastMove != PASS && simpleRand() > 0.5) {
+			auto [x, y] = g->b.offsetToCoords(lastMove);
+			board_offset_t moves[4];
+			int totalMoves = 0;
+			for (auto [tx, ty, toffset] :
+			    BoardTraverse(x, y, lastMove, g->b.getSize())) {
+				if (g->b.getValue(toffset) != PlayerColour::NONE) {
+					continue;
 				}
-			} else {
-				accept = !g->isIllegal(newMove, col) &&
-				         !g->b.isEyeLike(newMove, col);
+				if (patternMatch(g->b, tx, ty, col)) {
+					moves[totalMoves++] = toffset;
+				}
 			}
-			if (accept) {
-				move = newMove;
-				break;
-			} else {
-				--possibleMoves;
-				td->moves[idx] = td->moves[possibleMoves];
-				td->moves[possibleMoves] = newMove;
+			if (totalMoves > 0) {
+				if (totalMoves == 1) {
+					move = moves[0];
+				} else {
+					decltype(td->distr)::param_type param(0, totalMoves - 1);
+					td->distr.param(param);
+					move = moves[td->distr(td->gen)];
+				}
+			}
+		}
+		if (move == RESIGN) {
+			for (;;) {
+				if (possibleMoves == 0) {
+					move = RESIGN;
+					break;
+				}
+				std::size_t idx;
+				if (possibleMoves == 1) {
+					idx = 0;
+				} else {
+					decltype(td->distr)::param_type param(0, possibleMoves - 1);
+					td->distr.param(param);
+					idx = td->distr(td->gen);
+				}
+				board_offset_t newMove = td->moves[idx];
+				bool accept = false;
+				if (newMove == PASS) {
+					if (g->countPoints() == col) {
+						accept = true;
+					}
+				} else {
+					accept = !g->isIllegal(newMove, col) &&
+					         !g->b.isEyeLike(newMove, col);
+				}
+				if (accept) {
+					move = newMove;
+					break;
+				} else {
+					--possibleMoves;
+					td->moves[idx] = td->moves[possibleMoves];
+					td->moves[possibleMoves] = newMove;
+				}
 			}
 		}
 		g->playMove(move, col);
+		lastMove = move;
 		col = col.invert();
 	}
 	return g->winner;
@@ -332,7 +366,8 @@ void expandTree(Node *n, Game *g, PlayerColour col) {
 	n->expanded = true;
 }
 
-void simulate(Game *g, Node *n, PlayerColour col, ThreadData *td) {
+void simulate(Game *g, Node *n, PlayerColour col, ThreadData *td,
+    board_offset_t lastMove) {
 	if (g->winner == PlayerColour::NONE) {
 		bool burn = false;
 		if (n->explored.exchange(true) && !n->expanded) {
@@ -345,12 +380,12 @@ void simulate(Game *g, Node *n, PlayerColour col, ThreadData *td) {
 		if (n->expanded) {
 			auto child = selectMove(n, td);
 			g->playMove(child->move, col);
-			simulate(g, child, col.invert(), td);
+			simulate(g, child, col.invert(), td, child->move);
 		} else {
 			if (burn) {
 				++td->burned;
 			}
-			playout(g, col, td);
+			playout(g, col, td, lastMove);
 		}
 	}
 	n->visits++;
@@ -380,7 +415,7 @@ board_offset_t findMove(
 			    td.gen.seed(threadSeed);
 			    while (++playouts <= NUM_SIM) {
 				    Game clone = *g;
-				    simulate(&clone, &root, col, &td);
+				    simulate(&clone, &root, col, &td, PASS);
 				    std::this_thread::yield();
 			    }
 			    burned += td.burned;
