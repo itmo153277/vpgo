@@ -308,3 +308,36 @@ bool Board::isEyeLike(
 	}
 	return true;
 }
+
+bool Board::isCapture(
+    board_coord_t x, board_coord_t y, PlayerColour colour) const {
+	assert(x < m_Size);
+	assert(y < m_Size);
+	assert(colour == PlayerColour::BLACK || colour == PlayerColour::WHITE);
+	board_offset_t offset = coordsToOffset(x, y);
+	assert(m_State[offset] == PlayerColour::NONE);
+	std::pair<board_offset_t, int> neighbours[4];
+	int totalNeighbours = 0;
+	for (auto [tx, ty, toffset] : BoardTraverse(x, y, offset, m_Size)) {
+		if (m_State[toffset] != colour.invert()) {
+			continue;
+		}
+		auto group = getGroupLocation(toffset);
+		int neighbour = -1;
+		for (int i = 0; i < totalNeighbours; ++i) {
+			if (group == neighbours[i].first) {
+				neighbour = i;
+				break;
+			}
+		}
+		if (neighbour == -1) {
+			neighbour = totalNeighbours++;
+			neighbours[neighbour] = {group, m_Groups[group].edges};
+		}
+		--neighbours[neighbour].second;
+		if (neighbours[neighbour].second == 0) {
+			return true;
+		}
+	}
+	return false;
+}

@@ -44,7 +44,7 @@
 #include "pattern.hpp"
 
 const board_size_t BOARD_SIZE = 9;
-const int NUM_SIM = 500000;
+const int NUM_SIM = 1000000;
 const board_offset_t PASS = BOARD_SIZE * BOARD_SIZE;
 const board_offset_t RESIGN = PASS + 1;
 
@@ -199,7 +199,7 @@ PlayerColour playout(
 		std::size_t possibleMoves = td->moves.size();
 		board_offset_t move = RESIGN;
 
-		if (lastMove != PASS && simpleRand() > 0.5) {
+		if (lastMove != PASS && simpleRand() < 0.9f) {
 			auto [x, y] = g->b.offsetToCoords(lastMove);
 			board_offset_t moves[4];
 			int totalMoves = 0;
@@ -208,7 +208,8 @@ PlayerColour playout(
 				if (g->b.getValue(toffset) != PlayerColour::NONE) {
 					continue;
 				}
-				if (patternMatch(g->b, tx, ty, col)) {
+				if (g->b.isCapture(tx, ty, col) ||
+				    patternMatch(g->b, tx, ty, col)) {
 					moves[totalMoves++] = toffset;
 				}
 			}

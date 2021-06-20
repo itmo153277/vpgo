@@ -454,6 +454,13 @@ public:
 		return isEyeLike(x, y, colour);
 	}
 
+	bool isCapture(board_coord_t x, board_coord_t y, PlayerColour colour) const;
+
+	bool isCapture(board_offset_t offset, PlayerColour colour) const {
+		auto [x, y] = offsetToCoords(offset);
+		return isCapture(x, y, colour);
+	}
+
 	/**
 	 * Pre-computes hash
 	 *
