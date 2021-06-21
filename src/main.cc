@@ -44,7 +44,7 @@
 #include "pattern.hpp"
 
 const board_size_t BOARD_SIZE = 9;
-const int NUM_SIM = 1000000;
+const int NUM_SIM = 500000;
 const board_offset_t PASS = BOARD_SIZE * BOARD_SIZE;
 const board_offset_t RESIGN = PASS + 1;
 
@@ -245,7 +245,8 @@ PlayerColour playout(
 					}
 				} else {
 					accept = !g->isIllegal(newMove, col) &&
-					         !g->b.isEyeLike(newMove, col);
+					         !g->b.isEyeLike(newMove, col) &&
+					         !g->b.isSelfAtari(newMove, col);
 				}
 				if (accept) {
 					move = newMove;
