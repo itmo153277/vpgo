@@ -22,6 +22,7 @@
 
 #include "board.hpp"
 #include <cassert>
+#include "src/colour.hpp"
 
 /**
  * Merge two groups into one
@@ -340,4 +341,41 @@ bool Board::isCapture(
 		}
 	}
 	return false;
+}
+
+bool Board::isSelfAtari(
+    board_coord_t x, board_coord_t y, PlayerColour colour) const {
+	assert(x < m_Size);
+	assert(y < m_Size);
+	assert(colour == PlayerColour::BLACK || colour == PlayerColour::WHITE);
+	board_offset_t offset = coordsToOffset(x, y);
+	assert(m_State[offset] == PlayerColour::NONE);
+	board_offset_t neighbours[4];
+	int totalNeighbours = 0;
+	int totalStones = 1;
+	int totalEdges = 0;
+	for (auto [tx, ty, toffset] : BoardTraverse(x, y, offset, m_Size)) {
+		if (m_State[toffset] == PlayerColour::NONE) {
+			totalEdges++;
+		}
+		if (m_State[toffset] != colour) {
+			continue;
+		}
+		auto group = getGroupLocation(toffset);
+		for (int i = 0; i < totalNeighbours; ++i) {
+			if (group == neighbours[i]) {
+				goto foundNeighbour;
+			}
+		}
+		neighbours[totalNeighbours++] = group;
+		totalStones += m_Groups[group].stones;
+		totalEdges += m_Groups[group].edges;
+	foundNeighbour:
+		--totalEdges;
+	}
+	// Only consider group larger than 3 stones (sacrificing 4 and more to kill
+	// is not realistic during playouts)
+	// 3 and 4 edges are not interesting cases and can be allowed
+	// TODO(me): 2 edges require additional check for actual dame points!
+	return totalStones > 3 && totalEdges < 3;
 }

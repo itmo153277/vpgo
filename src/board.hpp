@@ -461,6 +461,14 @@ public:
 		return isCapture(x, y, colour);
 	}
 
+	bool isSelfAtari(
+	    board_coord_t x, board_coord_t y, PlayerColour colour) const;
+
+	bool isSelfAtari(board_offset_t offset, PlayerColour colour) const {
+		auto [x, y] = offsetToCoords(offset);
+		return isSelfAtari(x, y, colour);
+	}
+
 	/**
 	 * Pre-computes hash
 	 *
