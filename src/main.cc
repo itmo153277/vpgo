@@ -223,7 +223,7 @@ PlayerColour playout(
 				}
 			}
 		}
-		if (move == RESIGN) {
+		if (move == RESIGN || g->isIllegal(move, col)) {
 			for (;;) {
 				if (possibleMoves == 0) {
 					move = RESIGN;
