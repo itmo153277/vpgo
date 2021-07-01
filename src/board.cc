@@ -350,6 +350,9 @@ bool Board::isSelfAtari(
 	assert(colour == PlayerColour::BLACK || colour == PlayerColour::WHITE);
 	board_offset_t offset = coordsToOffset(x, y);
 	assert(m_State[offset] == PlayerColour::NONE);
+	if (isCapture(x, y, colour)) {
+		return false;
+	}
 	board_offset_t neighbours[4];
 	int totalNeighbours = 0;
 	int totalStones = 1;
@@ -377,5 +380,6 @@ bool Board::isSelfAtari(
 	// is not realistic during playouts)
 	// 3 and 4 edges are not interesting cases and can be allowed
 	// TODO(me): 2 edges require additional check for actual dame points!
+	//           Also, include 3 edges as well
 	return totalStones > 3 && totalEdges < 3;
 }

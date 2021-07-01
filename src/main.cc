@@ -48,10 +48,6 @@ const int NUM_SIM = 500000;
 const board_offset_t PASS = BOARD_SIZE * BOARD_SIZE;
 const board_offset_t RESIGN = PASS + 1;
 
-float simpleRand() {
-	return static_cast<float>(std::rand()) / static_cast<float>(RAND_MAX);
-}
-
 struct Game {
 	Board b{BOARD_SIZE};
 	PlayerColour winner = PlayerColour::NONE;
@@ -171,11 +167,10 @@ struct Node {
 	std::atomic<bool> expanding = false;
 	std::atomic<bool> expanded = false;
 	std::atomic<bool> explored = false;
-	board_offset_t move;
+	board_offset_t move = PASS;
 
 	Node() = default;
-	explicit Node(board_offset_t m) {
-		move = m;
+	explicit Node(board_offset_t m) : move(m) {
 	}
 };
 
@@ -192,14 +187,18 @@ struct ThreadData {
 	}
 };
 
-PlayerColour playout(
-    Game *g, PlayerColour toMove, ThreadData *td, board_offset_t lastMove) {
+PlayerColour playout(Game *g, PlayerColour toMove, ThreadData *td,
+    board_offset_t lastMove, bool print = false) {
 	PlayerColour col = toMove;
 	while (g->winner == PlayerColour::NONE) {
 		std::size_t possibleMoves = td->moves.size();
 		board_offset_t move = RESIGN;
+		auto policyValue = std::rand();
+		constexpr auto policyLimit =
+		    static_cast<decltype(RAND_MAX)>(RAND_MAX * 0.95);
+		bool randomMove = false;
 
-		if (lastMove != PASS && simpleRand() < 0.9f) {
+		if (lastMove != PASS && policyValue < policyLimit) {
 			auto [x, y] = g->b.offsetToCoords(lastMove);
 			board_offset_t moves[4];
 			int totalMoves = 0;
@@ -224,6 +223,7 @@ PlayerColour playout(
 			}
 		}
 		if (move == RESIGN || g->isIllegal(move, col)) {
+			randomMove = true;
 			for (;;) {
 				if (possibleMoves == 0) {
 					move = RESIGN;
@@ -244,9 +244,11 @@ PlayerColour playout(
 						accept = true;
 					}
 				} else {
-					accept = !g->isIllegal(newMove, col) &&
-					         !g->b.isEyeLike(newMove, col) &&
-					         !g->b.isSelfAtari(newMove, col);
+					accept = !g->isIllegal(newMove, col);
+					if (accept && policyValue < policyLimit) {
+						accept = !g->b.isEyeLike(newMove, col) &&
+						         !g->b.isSelfAtari(newMove, col);
+					}
 				}
 				if (accept) {
 					move = newMove;
@@ -258,6 +260,13 @@ PlayerColour playout(
 				}
 			}
 		}
+		if (print) {
+			std::cerr << playerToString(col) << ' ' << moveToString(move)
+			          << ' ';
+			if (randomMove) {
+				std::cerr << "(rand) ";
+			}
+		}
 		g->playMove(move, col);
 		lastMove = move;
 		col = col.invert();
@@ -266,7 +275,7 @@ PlayerColour playout(
 }
 
 board_offset_t bestMove(Node *n) {
-	if (1.0 * n->wins / n->visits < 0.1) {
+	if (1.0f * n->wins / n->visits < 0.1f) {
 		return RESIGN;
 	}
 	int maxVis = 0;
@@ -280,16 +289,16 @@ board_offset_t bestMove(Node *n) {
 	return move;
 }
 
-void printStats(Node *n) {
+void printStats(Node *n, Game *g, PlayerColour col) {
 	std::vector<int> winP(RESIGN);
 	std::vector<int> effortMap(RESIGN);
 	for (auto &m : n->nodes) {
-		winP[m->move] =
-		    static_cast<int>(100 - 100.0 * m->wins / m->visits + 0.5);
-		effortMap[m->move] =
-		    static_cast<int>(100.0 * m->visits / n->visits + 0.5);
+		winP[m->move] = std::min(
+		    static_cast<int>(100 - 100.0f * m->wins / m->visits + 0.5f), 99);
+		effortMap[m->move] = std::min(
+		    static_cast<int>(100.0f * m->visits / n->visits + 0.5f), 99);
 	}
-	std::cerr << "Win %: " << 1.0 * n->wins / n->visits << std::endl;
+	std::cerr << "Win %: " << 100.0f * n->wins / n->visits << std::endl;
 	std::cerr << "Playouts: " << n->visits << std::endl;
 	std::cerr << "Win % map:" << std::endl;
 	for (board_coord_t y = 0; y < BOARD_SIZE; ++y) {
@@ -315,8 +324,12 @@ void printStats(Node *n) {
 	std::cerr << "PASS = " << std::setw(2) << effortMap[PASS] << std::endl;
 	std::cerr << "Best line: ";
 	Node *curMove = n;
-	for (int i = 0; i < 5; ++i) {
+	Game clone = *g;
+	for (;;) {
 		if (!curMove->expanded) {
+			ThreadData td;
+			td.gen.seed(241);
+			playout(&clone, col, &td, curMove->move, true);
 			break;
 		}
 		Node *next = nullptr;
@@ -327,28 +340,29 @@ void printStats(Node *n) {
 				maxVisits = m->visits;
 			}
 		}
-		if (next == nullptr || next->visits < 100) {
-			break;
-		}
+		assert(next != nullptr);
 		board_offset_t move = next->move;
+		std::cerr << playerToString(col) << ' ' << moveToString(move) << ' '
+		          << '(' << std::setw(0) << next->visits << ") ";
+		clone.playMove(move, col);
+		col = col.invert();
 		curMove = next;
-		std::cerr << moveToString(move) << ' ';
-		std::cerr << '(' << std::setw(0) << curMove->visits << ") ";
 	}
 	std::cerr << std::endl;
 }
 
 Node *selectMove(Node *n, ThreadData *td) {
 	Node *child = n->nodes[0].get();
-	double bestVal = 0;
+	float bestVal = 0;
 	for (auto &m : n->nodes) {
-		double curVal;
+		float curVal;
 		if (m->visits == 0) {
 			curVal = 100 + td->gen();
 		} else {
-			curVal = 1.0 - 1.0 * m->wins / m->visits +
-			         std::sqrt(std::log(static_cast<double>(n->visits)) /
-			                   m->visits / 2);
+			curVal =
+			    1.0f - 1.0f * m->wins / m->visits +
+			    std::sqrt(std::log(static_cast<float>(n->visits)) / m->visits) *
+			        0.5f;
 		}
 		if (curVal > bestVal) {
 			child = m.get();
@@ -427,7 +441,7 @@ board_offset_t findMove(
 	for (auto &t : threads) {
 		t.join();
 	}
-	printStats(&root);
+	printStats(&root, g, col);
 	std::cerr << "Burned: " << burned.load() << std::endl;
 	std::cerr << "Passed time: "
 	          << std::chrono::duration_cast<std::chrono::milliseconds>(
