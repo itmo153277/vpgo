@@ -1,8 +1,12 @@
 cmake_minimum_required(VERSION 3.25)
 
+option(BUILD_TESTING "Enable testing" OFF)
+if(BUILD_TESTING)
+  list(APPEND VCPKG_MANIFEST_FEATURES "test")
+endif()
+
 project(vpgo CXX)
 
-option(BUILD_TESTING "Enable testing" OFF)
 option(ENABLE_LINT "Enable linting" OFF)
 option(ENABLE_FAST_MATH "Enable fast math" OFF)
 
