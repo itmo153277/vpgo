@@ -11,7 +11,7 @@ Any contributions are welcome.
 ### C++
 
 - Use `vcpkg`
-- C++20
+- C++23
 - Format with `clang-format`
 - Build with `ENABLE_LINT=ON`
 - Lint with `cpplint`, `clang-tidy` and `cppcheck`
