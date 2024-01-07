@@ -15,4 +15,4 @@ function setup_vcpkg() {
 [[ "${VCPKG_ROOT:-}" != "" ]] || setup_vcpkg
 CMAKE=$("${VCPKG_ROOT}/vcpkg" fetch cmake --x-stderr-status)
 
-exec "${CMAKE}" $*
+exec "${CMAKE}" "$@"
