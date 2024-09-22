@@ -9,7 +9,7 @@ tab_width = 2
 insert_final_newline = true
 trim_trailing_whitespace = true
 
-[*.{cc,hh}]
+[*.{cc,h}]
 tab_width = 4
 indent_size = 4
 indent_style = unset
