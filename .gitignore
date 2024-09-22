@@ -1,5 +1,6 @@
 .vscode
 .cache
+.vs
 /.vcpkg
 /build
 /CMakeUserPresets.json
