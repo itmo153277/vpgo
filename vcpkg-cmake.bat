@@ -4,7 +4,7 @@
 
 SetLocal
 
-Set VCPKG_BASELINE=98aa6396292d57e737a6ef999d4225ca488859d5
+Set VCPKG_BASELINE=e3ed41868d5034bc608eaaa58383cd6ecdbb5ffb
 
 If "%VCPKG_ROOT%" == "" Call :SetupVCPKG
 If ErrorLevel 1 GoTo :EOF
